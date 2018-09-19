@@ -1,0 +1,7 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+.ycm_extra_conf.py
+build
+parser.hpp
+parser.cpp
+parser.output
+lexer.cpp
