@@ -1,0 +1,272 @@
+%{
+
+#include <iostream> // cerr, endl
+#include <string> // string
+#include <unordered_map> // unordered_map
+#include <vector> // vector
+
+
+/*
+* @brief Extern lexical parsing function.
+*/
+extern int yylex();
+
+/*
+* @brief Error handling function.
+*/
+void yyerror(std::string_view msg)
+{
+	std::cerr << "[yyerror] " << msg << std::endl;
+	std::exit(1);
+}
+
+// @brief Global symbol table with identifiers and types.
+std::unordered_map<std::string, kk::type*> type_map;
+// @brief Program tree
+kk::program ast;
+
+%}
+
+/* Defining yacc union */
+%union
+{}
+
+/* Defining tokens */
+%token ID NUM VAR
+%token IF ELSE THEN DO FUNCTION PROCEDURE WHILE
+%token ARRAY ELIPSIS OF INTEGER REAL
+%token PROGRAM BEGIN_ END_
+%token EQ NE LE GE ASSIGN NOT
+
+/* Handling token precedence for conditional statements */
+%nonassoc THEN
+%nonassoc ELSE
+
+/* Setting operator precedence */
+%left EQ NE
+%left '<' '>' LE GE
+%left '+' '-'
+%left '*' '/'
+%right NOT
+
+%%
+
+/* kk::program */
+program
+	: PROGRAM ID ';' declarations subprogram_declarations compound_statement '.' {
+			ast = kk::program(*$2, $4, $5, $6);
+			delete $2; /* std::string */
+		}
+	;
+
+/* std::vector<std::string> */
+identifier_list
+	: ID {
+			$$ = new std::vector<std::string>{*$1};
+			delete $1; /* std::string */
+		}
+	| identifier_list ',' ID {
+			$$ = $1;
+			$$->push_back(*$3);
+			delete $3; /* std::string */
+		}
+	;
+
+/* kk::var */
+declarations
+	: VAR var_list {
+			$$ = new kk::var(*$2);
+			delete $2; /* std:::vector<std::string> */
+		}
+	;
+
+/* std::vector<std::string> */
+var_list
+	: var { $$ = std::vector<std::string>($1->begin(), $1->end()); }
+	| var_list var {
+			$$ = $1;
+			$$->insert($$->end(), $3->begin(), $3->end());
+			delete $3; /* std::vector<std::string> */
+		}
+	;
+
+/* std:::vector<std::string> */
+var
+	: identifier_list ':' type ';' {
+			$$ = new std::vector<std::string>($1->begin(), $1->end());
+
+			for(auto &&e : *$1) {
+				type_map[e->id()] = $3->clone();
+			}
+
+			delete $1; /* std::string */
+			delete $3; /* kk::type */
+		}
+	;
+
+/* kk::type */
+type
+	: base_type { $$ = $8; }
+	| ARRAY '[' NUM ELIPSIS NUM ']' OF base_type {
+			$$ = new kk::types::array($8, $5);
+		}
+	;
+
+/* kk::type */
+base_type
+	: INTEGER { $$ = new kk::types::integral; }
+	| REAL { $$ = new kk::types::real; }
+	;
+
+/* std::vector<kk::function*> */
+subprogram_declarations
+	: subprogram_declarations subprogram_declaration ';' {
+			$$ = $1;
+			$$->push_back($2);
+		}
+	| /* eps */ { $$ = new std::vector<kk::function*>; }
+	;
+
+/* kk::function */
+subprogram_declaration
+	: subprogram_head declarations compound_statement { $$ = new kk::function(*$1, $2, $3); }
+	;
+
+/* kk::function_prototype */
+subprogram_head
+	: FUNCTION ID arguments ':' base_type ';' {
+			$$ = new kk::function_prototype(*$2, *$3);
+			type_map[*$2] = $5;
+			delete $2; /* std::string */
+			delete $3; /* std::vector<std::string> */
+		}
+	| PROCEDURE ID arguments ';' {
+			$$ = new kk::function_prototype(*$2, *$3);
+			type_map[*$2] = new kk::types::none);
+			delete $2; /* std::string */
+			delete $3; /* std::vector<std::string> */
+		}
+	;
+
+/* std::vector<std::string> */
+arguments
+	: '(' parameter_list ')' { $$ = $2; }
+	| /* eps */ { $$ = new std::vector<std::string>; }
+	;
+
+/* std::vector<std::string> */
+parameter_list
+	: identifier_list ':' type {
+			$$ = new std::vector<std::string>($1->begin(), $1->end());
+
+			for(auto &&e : *$1) {
+				type_map[e->id()] = $3->clone();
+			}
+
+			delete $1; /* std::vector<std::string> */
+			delete $3; /* kk::type */
+		}
+	| parameter_list ';' identifier_list ':' type {
+			$$ = $1;
+			$$->insert($$->end(), $3->begin(), $3->end());
+
+			for(auto &&e : *$3) {
+				type_map[e->id()] = $5->clone();
+			}
+
+			delete $3; /* std::vector<std::string> */
+			delete $5; /* kk::type */
+		}
+	;
+
+/* kk::statement */
+compound_statement
+	: BEGIN_ optional_statements END_ {
+			$$ = new kk:::block(*$2);
+			delete $2; /* std::vector<kk::statement*> */
+		}
+	;
+
+/* std::vector<kk::statement*> */
+optional_statements
+	: statement_list { $$ = $1; }
+	| /* eps */ { $$ = new kk::none(); }
+	;
+
+/* std::vector<kk::statement*> */
+statement_list
+	: statement { $$ = new std::vector<kk::statement*>{$1}; }
+	| statement_list ';' statement {
+			$$ = $1;
+			$$->push_back($3);
+		}
+	;
+
+/* kk::statement */
+statement
+	: variable ASSIGN expression { $$ = new kk::assignment($1, $3); }
+	| procedure_statement { $$ = $1; }
+	| compound_statement { $$ = $1; }
+	| IF expression THEN statement ELSE statement { $$ = new kk::selection($2, $4, $6); }
+	| IF expression THEN statement { $$ = new kk::selection($2, $4); }
+	| WHILE expression DO statement { $$ = new kk::iteration($2, $4); }
+	;
+
+/* kk::expression */
+variable:
+	ID {
+			$$ = new kk::identifier(*$1);
+			delete $1; /* std::string */
+		}
+	| ID '[' expression ']' {
+			$$ = new kk::unary_operator(*$1, kk::unary::indexing, $3);
+			delete $1; /* std::string */
+		}
+	;
+
+/* kk::statement */
+procedure_statement
+	: ID {
+			$$ = new kk::function_call(*$1);
+			delete $1; /* std::string */
+		}
+	| ID '(' expression_list ')' {
+			$$ = new kk::function_call(*$1, *$3);
+			delete $3; /* std::string */
+		}
+	;
+
+/* std::vector<kk::expression*> */
+expression_list
+	: expression { $$ = new std::vector<kk::expression*>{$1}; }
+	| expression_list ',' expression {
+			$$ = $1;
+			$$->push_back($3);
+		}
+	;
+
+/* kk::expression */
+expression
+	: expression '+' expression { $$ = new kk::binary_operator(kk::binary::plus, $1, $3); }
+	| expression '-' expression { $$ = new kk::binary_operator(kk::binary::minus, $1, $3); }
+	| expression '*' expression { $$ = new kk::binary_operator(kk::binary::multiplies, $1, $3); }
+	| expression '/' expression { $$ = new kk::binary_operator(kk::binary::divides, $1, $3); }
+	| expression '<' expression { $$ = new kk::binary_operator(kk::binary::less, $1, $3); }
+	| expression '>' expression { $$ = new kk::binary_operator(kk::binary::greater, $1, $3); }
+	| expression EQ expression { $$ = new kk::binary_operator(kk::binary::equals, $1, $3); }
+	| expression NE expression { $$ = new kk::binary_operator(kk::binary::not_equal, $1, $3); }
+	| expression LE expression { $$ = new kk::binary_operator(kk::binary::less_equal, $1, $3); }
+	| expression GE expression { $$ = new kk::binary_operator(kk::binary::greater_equal, $1, $3); }
+	| '-' %prec '-' expression { $$ = new kk::unary_operator(kk::unary::minus, $2); }
+	| NOT expression { $$ = new kk::unary_operator(kk::unary::not, $2); }
+	| '(' expression ')' { $$ = $2; }
+	| ID { $$ = $1; }
+	| ID '(' expression_list ')' {
+			$$ = new kk::function_call(*$1, *$3);
+			delete $1; /* std::string */
+			delete $3; /* std::vector<kk::expression*> */
+		}
+	| NUM { $$ = new kk::literal($1); }
+	;
+
+%%
