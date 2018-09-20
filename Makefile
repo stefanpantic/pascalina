@@ -5,7 +5,7 @@ CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-wa
 LDFLAGS 	= $(shell llvm-config --ldflags --libs --system-libs)
 SRC 		= $(wildcard src/*.cpp)
 HEAD 		= $(patsubst src/%.cpp, include/%.hpp, $(SRC))
-HEADONLY 	= $(wildcard include/*.hpp include/opt/*.hpp)
+HEADONLY 	= $(wildcard include/*.hpp)
 OBJ 		= $(patsubst src/%.cpp, $(BUILD)/%.o, $(SRC))
 BUILD 		= build
 TITLE 		= kaleidescope.out
@@ -21,7 +21,7 @@ $(TARGET): $(BUILD)/parser.o $(BUILD)/lexer.o $(BUILD)/main.o $(OBJ)
 $(BUILD)/%.o: src/%.cpp include/%.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BUILD)/main.o: main.cpp parser.hpp
+$(BUILD)/main.o: main.cpp parser.hpp $(HEADONLY)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BUILD)/parser.o: parser.cpp $(HEADONLY)
