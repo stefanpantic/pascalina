@@ -182,7 +182,7 @@ parameter_list
 /* kk::statement */
 compound_statement
 	: BEGIN_ optional_statements END_ {
-			$$ = new kk:::block(*$2);
+			$$ = new kk:::compound(*$2);
 			delete $2; /* std::vector<kk::statement*> */
 		}
 	;
@@ -190,7 +190,7 @@ compound_statement
 /* std::vector<kk::statement*> */
 optional_statements
 	: statement_list { $$ = $1; }
-	| /* eps */ { $$ = new kk::none(); }
+	| /* eps */ { $$ = new std::vector<kk::statement*>; }
 	;
 
 /* std::vector<kk::statement*> */
@@ -253,14 +253,17 @@ expression
 	| expression '/' expression { $$ = new kk::binary_operator(kk::binary::divides, $1, $3); }
 	| expression '<' expression { $$ = new kk::binary_operator(kk::binary::less, $1, $3); }
 	| expression '>' expression { $$ = new kk::binary_operator(kk::binary::greater, $1, $3); }
-	| expression EQ expression { $$ = new kk::binary_operator(kk::binary::equals, $1, $3); }
-	| expression NE expression { $$ = new kk::binary_operator(kk::binary::not_equal, $1, $3); }
+	| expression EQ expression { $$ = new kk::binary_operator(kk::binary::equal_to, $1, $3); }
+	| expression NE expression { $$ = new kk::binary_operator(kk::binary::not_equal_to, $1, $3); }
 	| expression LE expression { $$ = new kk::binary_operator(kk::binary::less_equal, $1, $3); }
 	| expression GE expression { $$ = new kk::binary_operator(kk::binary::greater_equal, $1, $3); }
 	| '-' %prec '-' expression { $$ = new kk::unary_operator(kk::unary::minus, $2); }
-	| NOT expression { $$ = new kk::unary_operator(kk::unary::not, $2); }
+	| NOT expression { $$ = new kk::unary_operator(kk::unary::logical_not, $2); }
 	| '(' expression ')' { $$ = $2; }
-	| ID { $$ = $1; }
+	| ID {
+			$$ = new kk::identifier(*$1);
+			delete $1;
+		}
 	| ID '(' expression_list ')' {
 			$$ = new kk::function_call(*$1, *$3);
 			delete $1; /* std::string */
