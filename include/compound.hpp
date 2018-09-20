@@ -7,7 +7,7 @@
 #include "statement.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -34,6 +34,6 @@ namespace kk
 			{ v.visit(*this); }
 		private:
 			std::vector<std::unique_ptr<statement>> m_statements;
-	}; // class kk::compound
+	}; // class pascalina::compound
 
-} // namespace kk
+} // namespace pascalina

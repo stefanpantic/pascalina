@@ -6,7 +6,7 @@
 #include "visitor.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -30,6 +30,6 @@ namespace kk
 		private:
 			std::string m_id;
 			std::vector<std::string> m_params;
-	}; // class kk::function_prototype
+	}; // class pascalina::function_prototype
 
-} // namespace kk
+} // namespace pascalina

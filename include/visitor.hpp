@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace kk
+namespace pascalina
 {
 
 	/* Forward declarations */
@@ -41,11 +41,11 @@ namespace kk
 				virtual void visit(selection &) = 0;
 				virtual void visit(unary_operator &) = 0;
 				virtual void visit(var &) = 0;
-		}; // class kk::util::visitor
+		}; // class pascalina::util::visitor
 
-	} // namespace kk::util
+	} // namespace pascalina::util
 
-} // namespace kk
+} // namespace pascalina
 
 
 

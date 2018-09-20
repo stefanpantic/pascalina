@@ -6,7 +6,7 @@
 #include "statement.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -32,6 +32,6 @@ namespace kk
 		private:
 			std::unique_ptr<expression> m_condition;
 			std::unique_ptr<statement> m_then, m_elif;
-	}; // class kk::selection
+	}; // class pascalina::selection
 
-} // namespace kk
+} // namespace pascalina

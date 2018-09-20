@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -16,6 +16,6 @@ namespace kk
 
 			// Accept visitor member function
 			virtual void accept(Visitor &v) = 0;
-	}; // class kk::base
+	}; // class pascalina::base
 
-} // namespace kk
+} // namespace pascalina

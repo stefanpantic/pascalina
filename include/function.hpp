@@ -6,7 +6,7 @@
 #include "statement.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/* Forward declarations */
@@ -38,4 +38,4 @@ namespace kk
 			std::unique_ptr<statement> m_body;
 	};
 
-} // namespace kk
+} // namespace pascalina

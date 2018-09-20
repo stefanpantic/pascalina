@@ -5,7 +5,7 @@
 #include "expression.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -32,7 +32,7 @@ namespace kk
 	class binary_operator : public expression
 	{
 		public:
-			explicit binary_operator(kk::binary op, expression *lhs, expression *rhs)
+			explicit binary_operator(pascalina::binary op, expression *lhs, expression *rhs)
 				:	m_operator(std::move(op)),
 					m_lhs(std::move(lhs)),
 					m_rhs(std::move(rhs))
@@ -49,6 +49,6 @@ namespace kk
 		private:
 			binary m_operator;
 			std::unique_ptr<expression> m_lhs, m_rhs;
-	}; // class kk::binary_operator
+	}; // class pascalina::binary_operator
 
-} // namespace kk
+} // namespace pascalina

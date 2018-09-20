@@ -6,7 +6,7 @@
 #include "statement.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -27,6 +27,6 @@ namespace kk
 			{ v.visit(*this); }
 		private:
 			std::vector<std::string> m_ids;
-	}; // class kk::var
+	}; // class pascalina::var
 
-} // namespace kk
+} // namespace pascalina

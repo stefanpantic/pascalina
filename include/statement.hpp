@@ -6,13 +6,13 @@
 #include "visitor.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
 	* @brief Statement node base class.
 	*/
-	class statement : public kk::base<util::visitor>
+	class statement : public pascalina::base<util::visitor>
 	{
 		public:
 			// Virtual destructor
@@ -20,9 +20,9 @@ namespace kk
 
 			// Accept visitor member function
 			virtual void accept(util::visitor &v) = 0;
-	}; // class kk::expression
+	}; // class pascalina::expression
 
 
-} // namespace kk
+} // namespace pascalina
 
 

@@ -5,7 +5,7 @@
 #include "expression.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -26,6 +26,6 @@ namespace kk
 			{ v.visit(*this); }
 		private:
 			std::string m_id;
-	}; // class kk::identifier
+	}; // class pascalina::identifier
 
-} // namespace kk
+} // namespace pascalina

@@ -8,7 +8,7 @@
 #include "expression.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -37,6 +37,6 @@ namespace kk
 		private:
 			std::string m_id;
 			std::vector<std::unique_ptr<expression>> m_args;
-	}; // class kk::expression
+	}; // class pascalina::expression
 
-} // namespace kk
+} // namespace pascalina

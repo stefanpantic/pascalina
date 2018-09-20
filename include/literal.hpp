@@ -4,7 +4,7 @@
 #include "expression.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -30,6 +30,6 @@ namespace kk
 		private:
 			float m_val;
 
-	}; // class kk::expression
+	}; // class pascalina::expression
 
-} // namespace kk
+} // namespace pascalina

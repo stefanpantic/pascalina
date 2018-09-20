@@ -5,7 +5,7 @@
 #include "expression.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/*
@@ -24,7 +24,7 @@ namespace kk
 	class unary_operator : public expression
 	{
 		public:
-			explicit unary_operator(kk::unary op, expression *rhs)
+			explicit unary_operator(pascalina::unary op, expression *rhs)
 				:	m_operator(std::move(op)),
 					m_rhs(std::move(rhs))
 			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
@@ -39,6 +39,6 @@ namespace kk
 		private:
 			unary m_operator;
 			std::unique_ptr<expression> m_rhs;
-	}; // class kk::unary_operator
+	}; // class pascalina::unary_operator
 
-} // namespace kk
+} // namespace pascalina

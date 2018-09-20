@@ -6,7 +6,7 @@
 #include "expression.hpp"
 
 
-namespace kk
+namespace pascalina
 {
 
 	/* Forward declarations */
@@ -33,6 +33,6 @@ namespace kk
 		private:
 			std::unique_ptr<identifier> m_id;
 			std::unique_ptr<expression> m_rhs;
-	}; // class kk::assignment
+	}; // class pascalina::assignment
 
-} // namespace kk
+} // namespace pascalina
