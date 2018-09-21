@@ -1,4 +1,4 @@
-CXX 		= g++
+CXX 		= clang++
 STANDARD 	= c++17
 DEBUG 		= -ggdb -O0
 CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-warning-option -std=$(STANDARD) -Wall -Wextra
