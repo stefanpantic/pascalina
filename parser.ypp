@@ -4,6 +4,10 @@
 #include <string> // string
 #include <unordered_map> // unordered_map
 #include <vector> // vector
+#include <memory> // unique_ptr
+
+#include "ast.hpp"
+#include "types.hpp"
 
 
 /*
@@ -21,15 +25,34 @@ void yyerror(std::string_view msg)
 }
 
 // @brief Global symbol table with identifiers and types.
-std::unordered_map<std::string, pascalina::type*> type_map;
+std::unordered_map<std::string, pascalina::types::base*> type_map;
 // @brief Program tree
-pascalina::program ast;
+std::unique_ptr<pascalina::program> root;
 
 %}
 
 /* Defining yacc union */
 %union
-{}
+{
+	/* Expressions */
+	pascalina::expression *expression;
+	std::vector<pascalina::expression*> *expression_list;
+	/* Identifiers */
+	std::string *identifier;
+	std::vector<std::string> *identifier_list;
+	/* Statements */
+	pascalina::statement *statement;
+	std::vector<pascalina::statement*> *statement_list;
+	/* Subprograms */
+	pascalina::function *subprogram_declaration;
+	pascalina::function_prototype *subprogram_head;
+	std::vector<pascalina::function*> *subprogram_declarations;
+	/* Types */
+	pascalina::types::base *type;
+	/* Misc */
+	pascalina::var *declarations;
+	float literal;
+}
 
 /* Defining tokens */
 %token ID NUM VAR
@@ -37,6 +60,26 @@ pascalina::program ast;
 %token ARRAY ELIPSIS OF INTEGER REAL
 %token PROGRAM BEGIN_ END_
 %token EQ NE LE GE ASSIGN NOT
+
+/* Defining types */
+%type<declarations> declarations
+%type<identifier_list> var var_list identifier_list
+%type<type> base_type type
+%type<subprogram_declarations> subprogram_declarations
+%type<subprogram_declaration> subprogram_declaration
+%type<subprogram_head> subprogram_head
+%type<identifier_list> parameter_list arguments
+%type<statement_list> statement_list optional_statements
+%type<statement> statement compound_statement
+%type<expression> variable
+%type<statement> procedure_statement
+%type<expression_list> expression_list
+%type<expression> expression
+
+%type<literal> NUM
+%type<identifier> ID
+
+
 
 /* Handling token precedence for conditional statements */
 %nonassoc THEN
@@ -54,8 +97,9 @@ pascalina::program ast;
 /* pascalina::program */
 program
 	: PROGRAM ID ';' declarations subprogram_declarations compound_statement '.' {
-			ast = pascalina::program(*$2, $4, $5, $6);
+			//root = std::make_unique<pascalina::program>(*$2, $4, *$5, $6);
 			delete $2; /* std::string */
+			delete $5; /* std::vector<pascalina::function*> */
 		}
 	;
 
@@ -82,11 +126,11 @@ declarations
 
 /* std::vector<std::string> */
 var_list
-	: var { $$ = std::vector<std::string>($1->begin(), $1->end()); }
+	: var { $$ = new std::vector<std::string>($1->begin(), $1->end()); }
 	| var_list var {
 			$$ = $1;
-			$$->insert($$->end(), $3->begin(), $3->end());
-			delete $3; /* std::vector<std::string> */
+			$$->insert($$->end(), $2->begin(), $2->end());
+			delete $2; /* std::vector<std::string> */
 		}
 	;
 
@@ -96,23 +140,23 @@ var
 			$$ = new std::vector<std::string>($1->begin(), $1->end());
 
 			for(auto &&e : *$1) {
-				type_map[e->id()] = $3->clone();
+				type_map[e] = $3->clone();
 			}
 
 			delete $1; /* std::string */
-			delete $3; /* pascalina::type */
+			delete $3; /* pacalina::types::base */
 		}
 	;
 
-/* pascalina::type */
+/* pacalina::types::base */
 type
-	: base_type { $$ = $8; }
+	: base_type { $$ = $1; }
 	| ARRAY '[' NUM ELIPSIS NUM ']' OF base_type {
 			$$ = new pascalina::types::array($8, $5);
 		}
 	;
 
-/* pascalina::type */
+/* pacalina::types::base */
 base_type
 	: INTEGER { $$ = new pascalina::types::integral; }
 	| REAL { $$ = new pascalina::types::real; }
@@ -129,7 +173,7 @@ subprogram_declarations
 
 /* pascalina::function */
 subprogram_declaration
-	: subprogram_head declarations compound_statement { $$ = new pascalina::function(*$1, $2, $3); }
+	: subprogram_head declarations compound_statement { $$ = new pascalina::function($1, $2, $3); }
 	;
 
 /* pascalina::function_prototype */
@@ -142,7 +186,7 @@ subprogram_head
 		}
 	| PROCEDURE ID arguments ';' {
 			$$ = new pascalina::function_prototype(*$2, *$3);
-			type_map[*$2] = new pascalina::types::none);
+			type_map[*$2] = new pascalina::types::integral;
 			delete $2; /* std::string */
 			delete $3; /* std::vector<std::string> */
 		}
@@ -160,29 +204,29 @@ parameter_list
 			$$ = new std::vector<std::string>($1->begin(), $1->end());
 
 			for(auto &&e : *$1) {
-				type_map[e->id()] = $3->clone();
+				type_map[e] = $3->clone();
 			}
 
 			delete $1; /* std::vector<std::string> */
-			delete $3; /* pascalina::type */
+			delete $3; /* pacalina::types::base */
 		}
 	| parameter_list ';' identifier_list ':' type {
 			$$ = $1;
 			$$->insert($$->end(), $3->begin(), $3->end());
 
 			for(auto &&e : *$3) {
-				type_map[e->id()] = $5->clone();
+				type_map[e] = $5->clone();
 			}
 
 			delete $3; /* std::vector<std::string> */
-			delete $5; /* pascalina::type */
+			delete $5; /* pacalina::types::base */
 		}
 	;
 
 /* pascalina::statement */
 compound_statement
 	: BEGIN_ optional_statements END_ {
-			$$ = new pascalina:::compound(*$2);
+			$$ = new pascalina::compound(*$2);
 			delete $2; /* std::vector<pascalina::statement*> */
 		}
 	;
@@ -219,7 +263,7 @@ variable:
 			delete $1; /* std::string */
 		}
 	| ID '[' expression ']' {
-			$$ = new pascalina::unary_operator(*$1, pascalina::unary::indexing, $3);
+			//$$ = new pascalina::indexing(*$1, $3);
 			delete $1; /* std::string */
 		}
 	;
@@ -227,13 +271,13 @@ variable:
 /* pascalina::statement */
 procedure_statement
 	: ID {
-			$$ = new pascalina::function_call(*$1);
+			//$$ = new pascalina::function_call(*$1);
 			delete $1; /* std::string */
 		}
 	| ID '(' expression_list ')' {
-			$$ = new pascalina::function_call(*$1, *$3);
+			//$$ = new pascalina::function_call(*$1, *$3);
 			delete $1; /* std::string */
-			delete $3; /* std::vector<expression*> */
+			delete $3; /* std::vector<pascalina::expression*> */
 		}
 	;
 
