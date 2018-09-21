@@ -1,12 +1,21 @@
 #include <iostream>
+#include <unordered_map>
 #include "ast.hpp"
 #include "types.hpp"
 #include "parser.hpp"
 
+// @brief Global symbol table with identifiers and types.
+extern std::unordered_map<std::string, pascalina::types::base*> type_map;
+
 int
-main(void)
+main(int argc, const char **)
 {
-	yydebug = 1;
+	yydebug = (argc == 2);
 	yyparse();
+
+	for(auto &&e : type_map) {
+		delete e.second;
+	}
+
 	return 0;
 }
