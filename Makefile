@@ -8,7 +8,7 @@ HEAD 		= $(patsubst src/%.cpp, include/%.hpp, $(SRC))
 HEADONLY 	= $(wildcard include/*.hpp)
 OBJ 		= $(patsubst src/%.cpp, $(BUILD)/%.o, $(SRC))
 BUILD 		= build
-TITLE 		= kaleidescope.out
+TITLE 		= pascalina.out
 TARGET 		= $(BUILD)/$(TITLE)
 
 .PHONY: clean zip
