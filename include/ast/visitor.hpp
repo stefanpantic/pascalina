@@ -14,7 +14,8 @@ namespace pascalina
 	class identifier;
 	class iteration;
 	class literal;
-	class program; /* TODO: Implement program node */
+	class procedure_call;
+	class program;
 	class selection;
 	class unary_operator;
 	class var;
@@ -37,6 +38,7 @@ namespace pascalina
 				virtual void visit(identifier &) = 0;
 				virtual void visit(iteration &) = 0;
 				virtual void visit(literal &) = 0;
+				virtual void visit(procedure_call &) = 0;
 				virtual void visit(program &) = 0;
 				virtual void visit(selection &) = 0;
 				virtual void visit(unary_operator &) = 0;
