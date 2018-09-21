@@ -33,6 +33,7 @@ extern void yyerror(std::string_view msg);
 "then"				{ return THEN; }
 "if"				{ return IF; }
 "not"				{ return NOT; }
+"of"				{ return OF; }
 "var"				{ return VAR; }
 "program"			{ return PROGRAM; }
 "procedure"			{ return PROCEDURE; }
@@ -50,11 +51,11 @@ extern void yyerror(std::string_view msg);
 						yylval.identifier = new std::string(yytext);
 						return ID;
 					}
-[0-9]([.][0-9]+)?	{ 
+[0-9]+([.][0-9]+)?	{ 
 						yylval.literal = std::atof(yytext);
 						return NUM;
 					}
-[;:+*<>=/\[\](),-]	{ return *yytext; }
+[;:+*<>=/\[\](),.-]	{ return *yytext; }
 [\t\n ]				{ /* ignore */ }
 .					{ yyerror("Lexical error, invalid token: " + std::string(yytext)); }
 
