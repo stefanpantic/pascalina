@@ -16,10 +16,10 @@ namespace pascalina
 	class compound : public statement
 	{
 		public:
-			explicit compound(const std::vector<statement*> statements)
+			explicit compound(std::vector<statement*> statements)
 			{
-				for(auto &&e : statements) {
-					m_statements.emplace_back(std::move(e));
+				for(auto *e : statements) {
+					m_statements.emplace_back(e);
 				}
 
 				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;

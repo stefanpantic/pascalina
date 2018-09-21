@@ -15,7 +15,7 @@ namespace pascalina
 	class var : public statement
 	{
 		public:
-			explicit var(const std::vector<std::string> &ids)
+			explicit var(const std::vector<std::string> &ids = {})
 				:	m_ids(ids)
 			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
 

@@ -12,6 +12,7 @@
 #include "ast/identifier.hpp"
 #include "ast/iteration.hpp"
 #include "ast/literal.hpp"
+#include "ast/procedure_call.hpp"
 #include "ast/program.hpp"
 #include "ast/selection.hpp"
 #include "ast/statement.hpp"

@@ -17,11 +17,11 @@ namespace pascalina
 	class function_call : public expression
 	{
 		public:
-			explicit function_call(std::string id, const std::vector<expression*> &args = {})
+			explicit function_call(std::string id, std::vector<expression*> args = {})
 				:	m_id(std::move(id))
 			{
-				for(auto &&e : args) {
-					m_args.emplace_back(std::move(e));
+				for(auto *e : args) {
+					m_args.emplace_back(e);
 				}
 
 				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;

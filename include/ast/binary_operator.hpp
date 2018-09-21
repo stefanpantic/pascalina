@@ -23,6 +23,7 @@ namespace pascalina
 		multiplies,
 		not_equal_to,
 		plus,
+		index,
 	};
 
 
