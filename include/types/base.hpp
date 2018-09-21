@@ -13,6 +13,7 @@ namespace pascalina::types
 	enum class typetag
 	{
 		integral,
+		none,
 		real,
 		array,
 	}; // enum class pascalina::typetag
