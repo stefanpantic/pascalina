@@ -22,13 +22,13 @@ namespace pascalina
 	{
 		public:
 			explicit program(	std::string id, var *declarations,
-								std::vector<function*> subprograms, statement *mainfunc)
+								std::vector<function*> &&subprograms, statement *mainfunc)
 				:	m_id(std::move(id)),
 					m_declarations(std::move(declarations)),
 					m_main(std::move(mainfunc))
 			{
 				for(auto *e : subprograms) {
-					m_subprograms.emplace_back(e);
+					m_subprograms.emplace_back(std::move(e));
 				}
 
 				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;

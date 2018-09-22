@@ -18,11 +18,11 @@ namespace pascalina
 	class procedure_call : public statement
 	{
 		public:
-			explicit procedure_call(std::string id, std::vector<expression*> args = {})
+			explicit procedure_call(std::string id, std::vector<expression*> &&args = {})
 				:	m_id(std::move(id))
 			{
 				for(auto *e : args) {
-					m_args.emplace_back(e);
+					m_args.emplace_back(std::move(e));
 				}
 
 				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;
