@@ -24,9 +24,9 @@ void yyerror(std::string_view msg)
 	std::exit(1);
 }
 
-// @brief Global symbol table with identifiers and types.
+// Global symbol table with identifiers and types.
 std::unordered_multimap<std::string, pascalina::types::base*> type_map;
-// @brief Program tree
+// Program tree
 //std::unique_ptr<pascalina::program> root;
 
 %}
@@ -43,6 +43,9 @@ std::unordered_multimap<std::string, pascalina::types::base*> type_map;
 	/* Statements */
 	pascalina::statement *statement;
 	std::vector<pascalina::statement*> *statement_list;
+	/* Var */
+	std::pair<std::vector<std::string>, pascalina::types::base*> *var;
+	std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>> *var_list;
 	/* Subprograms */
 	pascalina::function *subprogram_declaration;
 	pascalina::function_prototype *subprogram_head;
@@ -63,7 +66,9 @@ std::unordered_multimap<std::string, pascalina::types::base*> type_map;
 
 /* Defining types */
 %type<declarations> declarations
-%type<identifier_list> var var_list identifier_list
+%type<var> var
+%type<var_list> var_list
+%type<identifier_list> identifier_list
 %type<type> base_type type
 %type<subprogram_declarations> subprogram_declarations
 %type<subprogram_declaration> subprogram_declaration
@@ -118,8 +123,8 @@ identifier_list
 /* pascalina::var */
 declarations
 	: VAR var_list {
-			$$ = new pascalina::var(*$2);
-			delete $2; /* std:::vector<std::string> */
+			$$ = new pascalina::var(std::move(*$2));
+			delete $2; /* std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>> */
 		}
 	| /* eps */ { $$ = new pascalina::var(); }
 	;
@@ -127,20 +132,23 @@ declarations
 /* std::vector<std::string> */
 var_list
 	: var {
-			$$ = new std::vector<std::string>($1->begin(), $1->end());
-			delete $1;
+			$$ = new std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>>{*$1};
+			delete $1->second; /* pascalina::types::base */
+			delete $1; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
 		}
 	| var_list var {
 			$$ = $1;
-			$$->insert($$->end(), $2->begin(), $2->end());
-			delete $2; /* std::vector<std::string> */
+			$$->push_back(std::move(*$2));
+			delete $2->second; /* pascalina::types::base */
+			delete $2; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
 		}
 	;
 
 /* std:::vector<std::string> */
 var
 	: identifier_list ':' type ';' {
-			$$ = new std::vector<std::string>($1->begin(), $1->end());
+			std::vector<std::string> id_list($1->begin(), $1->end());
+			$$ = new std::pair<std::vector<std::string>, pascalina::types::base*>(std::move(id_list), $3->clone());
 
 			for(auto &&e : *$1) {
 				type_map.emplace(e, $3->clone());

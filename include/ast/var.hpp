@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "types.hpp"
 #include "statement.hpp"
 
 
@@ -14,19 +15,27 @@ namespace pascalina
 	*/
 	class var : public statement
 	{
+		// Convenience
+		using id_type_pairs = std::vector<std::pair<std::vector<std::string>, types::base*>>;
+
 		public:
-			explicit var(const std::vector<std::string> &ids = {})
-				:	m_ids(ids)
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			explicit var(id_type_pairs &&ids = {})
+			{
+				for(auto &&e : ids) {
+					m_ids.emplace_back(std::move(e));
+				}
+
+				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;
+			}
 
 			// Getter
-			inline const std::vector<std::string> &ids() const { return m_ids; }
+			inline const id_type_pairs &ids() const { return m_ids; }
 
 			// Accept visitor member function
 			void accept(util::visitor &v) override
 			{ v.visit(*this); }
 		private:
-			std::vector<std::string> m_ids;
+			id_type_pairs m_ids;
 	}; // class pascalina::var
 
 } // namespace pascalina
