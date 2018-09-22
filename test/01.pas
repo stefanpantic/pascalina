@@ -1,4 +1,4 @@
-program asd;
+program tekashi;
 
 var
 	a, b : Integer;
