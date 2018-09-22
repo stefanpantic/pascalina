@@ -29,20 +29,20 @@ namespace pascalina
 		class visitor
 		{
 			public:
-				virtual void visit(const assignment &) const = 0;
-				virtual void visit(const binary_operator &) const = 0;
-				virtual void visit(const compound &) const = 0;
-				virtual void visit(const function_call &) const = 0;
-				virtual void visit(const function &) const = 0;
-				virtual void visit(const function_prototype &) const = 0;
-				virtual void visit(const identifier &) const = 0;
-				virtual void visit(const iteration &) const = 0;
-				virtual void visit(const literal &) const = 0;
-				virtual void visit(const procedure_call &) const = 0;
-				virtual void visit(const program &) const = 0;
-				virtual void visit(const selection &) const = 0;
-				virtual void visit(const unary_operator &) const = 0;
-				virtual void visit(const var &) const = 0;
+				virtual void visit(const assignment &) = 0;
+				virtual void visit(const binary_operator &) = 0;
+				virtual void visit(const compound &) = 0;
+				virtual void visit(const function_call &) = 0;
+				virtual void visit(const function &) = 0;
+				virtual void visit(const function_prototype &) = 0;
+				virtual void visit(const identifier &) = 0;
+				virtual void visit(const iteration &) = 0;
+				virtual void visit(const literal &) = 0;
+				virtual void visit(const procedure_call &) = 0;
+				virtual void visit(const program &) = 0;
+				virtual void visit(const selection &) = 0;
+				virtual void visit(const unary_operator &) = 0;
+				virtual void visit(const var &) = 0;
 		}; // class pascalina::util::visitor
 
 	} // namespace pascalina::util
