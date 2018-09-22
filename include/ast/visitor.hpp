@@ -43,6 +43,9 @@ namespace pascalina
 				virtual void visit(const selection &) = 0;
 				virtual void visit(const unary_operator &) = 0;
 				virtual void visit(const var &) = 0;
+
+				// Virtual destructor
+				virtual ~visitor() {}
 		}; // class pascalina::util::visitor
 
 	} // namespace pascalina::util
