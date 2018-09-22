@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include "ast.hpp"
 #include "types.hpp"
-#include "visitors/traverse.hpp"
+#include "visitors/serializer.hpp"
 #include "parser.hpp"
 
 // Global symbol table with identifiers and types.
@@ -20,8 +20,8 @@ main(int argc, const char **)
 		delete e.second;
 	}
 
-	pascalina::util::traverse traverser;
-	traverser.visit(*root.get());
+	pascalina::util::serializer s;
+	root->accept(s);
 
 	return 0;
 }
