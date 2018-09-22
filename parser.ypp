@@ -67,13 +67,12 @@ std::unique_ptr<pascalina::program> root;
 /* Defining types */
 %type<declarations> declarations
 %type<var> var
-%type<var_list> var_list
+%type<var_list> var_list arguments
 %type<identifier_list> identifier_list
 %type<type> base_type type
 %type<subprogram_declarations> subprogram_declarations
 %type<subprogram_declaration> subprogram_declaration
 %type<subprogram_head> subprogram_head
-%type<identifier_list> parameter_list arguments
 %type<statement_list> statement_list optional_statements
 %type<statement> statement compound_statement procedure_statement
 %type<expression> variable
@@ -122,7 +121,7 @@ identifier_list
 
 /* pascalina::var */
 declarations
-	: VAR var_list {
+	: VAR var_list ';' {
 			$$ = new pascalina::var(std::move(*$2));
 			delete $2; /* std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>> */
 		}
@@ -135,16 +134,16 @@ var_list
 			$$ = new std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>>{*$1};
 			delete $1; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
 		}
-	| var_list var {
+	| var_list ';' var {
 			$$ = $1;
-			$$->push_back(std::move(*$2));
-			delete $2; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
+			$$->push_back(std::move(*$3));
+			delete $3; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
 		}
 	;
 
 /* std:::vector<std::string> */
 var
-	: identifier_list ':' type ';' {
+	: identifier_list ':' type {
 			std::vector<std::string> id_list($1->begin(), $1->end());
 			$$ = new std::pair<std::vector<std::string>, pascalina::types::base*>(std::move(id_list), $3->clone());
 
@@ -188,13 +187,13 @@ subprogram_declaration
 /* pascalina::function_prototype */
 subprogram_head
 	: FUNCTION ID arguments ':' base_type ';' {
-			$$ = new pascalina::function_prototype(*$2, *$3);
+			$$ = new pascalina::function_prototype(*$2, std::move(*$3));
 			type_map.emplace(*$2, $5);
 			delete $2; /* std::string */
 			delete $3; /* std::vector<std::string> */
 		}
 	| PROCEDURE ID arguments ';' {
-			$$ = new pascalina::function_prototype(*$2, *$3);
+			$$ = new pascalina::function_prototype(*$2, std::move(*$3));
 			type_map.emplace(*$2, new pascalina::types::none);
 			delete $2; /* std::string */
 			delete $3; /* std::vector<std::string> */
@@ -203,33 +202,8 @@ subprogram_head
 
 /* std::vector<std::string> */
 arguments
-	: '(' parameter_list ')' { $$ = $2; }
-	| /* eps */ { $$ = new std::vector<std::string>; }
-	;
-
-/* std::vector<std::string> */
-parameter_list
-	: identifier_list ':' type {
-			$$ = new std::vector<std::string>($1->begin(), $1->end());
-
-			for(auto &&e : *$1) {
-				type_map.emplace(e, $3->clone());
-			}
-
-			delete $1; /* std::vector<std::string> */
-			delete $3; /* pacalina::types::base */
-		}
-	| parameter_list ';' identifier_list ':' type {
-			$$ = $1;
-			$$->insert($$->end(), $3->begin(), $3->end());
-
-			for(auto &&e : *$3) {
-				type_map.emplace(e, $5->clone());
-			}
-
-			delete $3; /* std::vector<std::string> */
-			delete $5; /* pacalina::types::base */
-		}
+	: '(' var_list ')' { $$ = $2; }
+	| /* eps */ { $$ = new std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>>; }
 	;
 
 /* pascalina::statement */
