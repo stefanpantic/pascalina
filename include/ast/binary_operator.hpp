@@ -37,7 +37,7 @@ namespace pascalina
 				:	m_operator(std::move(op)),
 					m_lhs(std::move(lhs)),
 					m_rhs(std::move(rhs))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const binary &op() const { return m_operator; }

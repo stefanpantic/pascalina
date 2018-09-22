@@ -16,7 +16,7 @@ namespace pascalina::types
 		public:
 			none()
 				:	base(typetag::none)
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Overrided clone member function
 			base *clone() const override

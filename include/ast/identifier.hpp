@@ -16,7 +16,7 @@ namespace pascalina
 		public:
 			explicit identifier(std::string id)
 				:	m_id(std::move(id))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// ID getter
 			inline const std::string &id() const { return m_id; }

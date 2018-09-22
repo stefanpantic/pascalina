@@ -26,7 +26,7 @@ namespace pascalina::types
 		public:
 			explicit base(typetag tag)
 				:	m_tag(std::move(tag))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Virtual destructor
 			virtual ~base() {}

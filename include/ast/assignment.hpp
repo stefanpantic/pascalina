@@ -22,7 +22,7 @@ namespace pascalina
 			explicit assignment(expression *id, expression *rhs)
 				:	m_id(std::move(id)),
 					m_rhs(std::move(rhs))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const expression *id() const { return m_id.get(); }

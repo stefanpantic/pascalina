@@ -27,7 +27,7 @@ namespace pascalina
 			explicit unary_operator(pascalina::unary op, expression *rhs)
 				:	m_operator(std::move(op)),
 					m_rhs(std::move(rhs))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const unary &op() const { return m_operator; }

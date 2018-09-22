@@ -22,7 +22,7 @@ namespace pascalina
 					m_statements.emplace_back(std::move(e));
 				}
 
-				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;
+				std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;
 			}
 
 			// Getter

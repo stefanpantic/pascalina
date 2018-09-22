@@ -19,7 +19,7 @@ namespace pascalina::types
 				:	base(typetag::array),
 					m_underlying(std::move(underlying)),
 					m_size(std::move(size))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const base *underlying() const { return m_underlying.get(); }

@@ -23,7 +23,7 @@ namespace pascalina
 				:	m_proto(std::move(proto)),
 					m_vars(std::move(vars)),
 					m_body(std::move(body))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const function_prototype *proto() const { return m_proto.get(); }
