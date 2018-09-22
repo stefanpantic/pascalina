@@ -15,17 +15,17 @@ namespace pascalina
 		public:
 			explicit literal(int val)
 				:	m_val(std::move(val))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			explicit literal(float val)
 				:	m_val(std::move(val))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getter
 			inline const float &val() const { return m_val; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			float m_val;

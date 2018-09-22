@@ -22,7 +22,7 @@ namespace pascalina
 					m_statements.emplace_back(std::move(e));
 				}
 
-				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;
+				std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;
 			}
 
 			// Getter
@@ -30,7 +30,7 @@ namespace pascalina
 			{ return m_statements; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			std::vector<std::unique_ptr<statement>> m_statements;

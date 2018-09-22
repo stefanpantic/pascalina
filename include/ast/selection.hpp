@@ -19,7 +19,7 @@ namespace pascalina
 				:	m_condition(std::move(condition)),
 					m_then(std::move(then)),
 					m_elif(std::move(elif))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const expression *condition() const { return m_condition.get(); }
@@ -27,7 +27,7 @@ namespace pascalina
 			inline const statement *elif() const { return m_elif.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			std::unique_ptr<expression> m_condition;

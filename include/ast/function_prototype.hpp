@@ -18,14 +18,14 @@ namespace pascalina
 			explicit function_prototype(std::string id, const std::vector<std::string> &params)
 				:	m_id(std::move(id)),
 					m_params(params)
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const std::string &id() const { return m_id; }
 			inline const std::vector<std::string> &params() const { return m_params; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v)
+			void accept(util::visitor &v) const
 			{ v.visit(*this); }
 		private:
 			std::string m_id;

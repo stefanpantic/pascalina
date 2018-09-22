@@ -18,14 +18,14 @@ namespace pascalina
 			explicit iteration(expression *condition, statement *body)
 				:	m_condition(std::move(condition)),
 					m_body(std::move(body))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const expression *condition() const { return m_condition.get(); }
 			inline const statement *body() const { return m_body.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			std::unique_ptr<expression> m_condition;

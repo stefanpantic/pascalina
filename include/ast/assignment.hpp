@@ -22,14 +22,14 @@ namespace pascalina
 			explicit assignment(expression *id, expression *rhs)
 				:	m_id(std::move(id)),
 					m_rhs(std::move(rhs))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const expression *id() const { return m_id.get(); }
 			inline const expression *rhs() const { return m_rhs.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			std::unique_ptr<expression> m_id, m_rhs;

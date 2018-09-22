@@ -16,13 +16,13 @@ namespace pascalina
 		public:
 			explicit identifier(std::string id)
 				:	m_id(std::move(id))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// ID getter
 			inline const std::string &id() const { return m_id; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			std::string m_id;

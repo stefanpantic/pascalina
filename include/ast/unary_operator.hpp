@@ -27,14 +27,14 @@ namespace pascalina
 			explicit unary_operator(pascalina::unary op, expression *rhs)
 				:	m_operator(std::move(op)),
 					m_rhs(std::move(rhs))
-			{ std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl; }
+			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
 
 			// Getters
 			inline const unary &op() const { return m_operator; }
 			inline const expression *rhs() const { return m_rhs.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			unary m_operator;

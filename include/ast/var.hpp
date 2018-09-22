@@ -25,14 +25,14 @@ namespace pascalina
 					m_ids.emplace_back(std::move(e));
 				}
 
-				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;
+				std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;
 			}
 
 			// Getter
 			inline const id_type_pairs &ids() const { return m_ids; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) override
+			void accept(util::visitor &v) const override
 			{ v.visit(*this); }
 		private:
 			id_type_pairs m_ids;

@@ -8,8 +8,8 @@ namespace pascalina
 	class assignment;
 	class binary_operator;
 	class compound;
-	class function;
 	class function_call;
+	class function;
 	class function_prototype;
 	class identifier;
 	class iteration;
@@ -29,20 +29,20 @@ namespace pascalina
 		class visitor
 		{
 			public:
-				virtual void visit(assignment &) = 0;
-				virtual void visit(binary_operator &) = 0;
-				virtual void visit(compound &) = 0;
-				virtual void visit(function &) = 0;
-				virtual void visit(function_call &) = 0;
-				virtual void visit(function_prototype &) = 0;
-				virtual void visit(identifier &) = 0;
-				virtual void visit(iteration &) = 0;
-				virtual void visit(literal &) = 0;
-				virtual void visit(procedure_call &) = 0;
-				virtual void visit(program &) = 0;
-				virtual void visit(selection &) = 0;
-				virtual void visit(unary_operator &) = 0;
-				virtual void visit(var &) = 0;
+				virtual void visit(const assignment &) const = 0;
+				virtual void visit(const binary_operator &) const = 0;
+				virtual void visit(const compound &) const = 0;
+				virtual void visit(const function_call &) const = 0;
+				virtual void visit(const function &) const = 0;
+				virtual void visit(const function_prototype &) const = 0;
+				virtual void visit(const identifier &) const = 0;
+				virtual void visit(const iteration &) const = 0;
+				virtual void visit(const literal &) const = 0;
+				virtual void visit(const procedure_call &) const = 0;
+				virtual void visit(const program &) const = 0;
+				virtual void visit(const selection &) const = 0;
+				virtual void visit(const unary_operator &) const = 0;
+				virtual void visit(const var &) const = 0;
 		}; // class pascalina::util::visitor
 
 	} // namespace pascalina::util

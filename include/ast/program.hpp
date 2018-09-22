@@ -31,7 +31,7 @@ namespace pascalina
 					m_subprograms.emplace_back(std::move(e));
 				}
 
-				std::clog << "[constructor]" << __PRETTY_FUNCTION__ << std::endl;
+				std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;
 			}
 
 			// Getters
@@ -41,7 +41,7 @@ namespace pascalina
 			inline const statement *mainfunc() const { return m_main.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v)
+			void accept(util::visitor &v) const
 			{ v.visit(*this); }
 		private:
 			std::string m_id;

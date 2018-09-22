@@ -3,10 +3,10 @@ STANDARD 	= c++17
 DEBUG 		= -ggdb -O0
 CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-warning-option -std=$(STANDARD) -Wall -Wextra
 LDFLAGS 	= $(shell llvm-config --ldflags --libs --system-libs)
-SRC 		= $(wildcard src/*.cpp)
-HEAD 		= $(patsubst src/%.cpp, include/%.hpp, $(SRC))
+SRC 		= $(wildcard src/*.cpp src/visitors/*.cpp)
+HEAD 		= $(SRC:src=include)
 HEADONLY 	= $(wildcard include/*.hpp include/ast/*.hpp include/types/*.hpp)
-OBJ 		= $(patsubst src/%.cpp, $(BUILD)/%.o, $(SRC))
+OBJ 		= $(patsubst src/visitors/%.cpp, $(BUILD)/%.o, $(SRC))
 BUILD 		= build
 TITLE 		= pascalina.out
 TARGET 		= $(BUILD)/$(TITLE)
@@ -18,7 +18,7 @@ all: $(BUILD) $(TARGET)
 $(TARGET): $(BUILD)/parser.o $(BUILD)/lexer.o $(BUILD)/main.o $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD)/%.o: src/%.cpp include/%.hpp
+$(BUILD)/%.o: src/visitors/%.cpp include/visitors/%.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BUILD)/main.o: main.cpp parser.hpp $(HEADONLY)

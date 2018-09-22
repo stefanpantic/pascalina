@@ -19,7 +19,7 @@ namespace pascalina
 			virtual ~statement() {}
 
 			// Accept visitor member function
-			virtual void accept(util::visitor &v) = 0;
+			virtual void accept(util::visitor &v) const = 0;
 	}; // class pascalina::expression
 
 
