@@ -16,13 +16,14 @@ namespace pascalina
 	class var : public statement
 	{
 		// Convenience
-		using id_type_pairs = std::vector<std::pair<std::vector<std::string>, types::base*>>;
+		using id_type_pairs_impl = std::vector<std::pair<std::vector<std::string>, types::base*>>;
+		using id_type_pairs = std::vector<std::pair<std::vector<std::string>, std::unique_ptr<types::base>>>;
 
 		public:
-			explicit var(id_type_pairs &&ids = {})
+			explicit var(id_type_pairs_impl &&ids = {})
 			{
 				for(auto &&e : ids) {
-					m_ids.emplace_back(std::move(e));
+					m_ids.emplace_back(e.first, std::move(e.second));
 				}
 
 				std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;

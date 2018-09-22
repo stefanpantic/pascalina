@@ -133,13 +133,11 @@ declarations
 var_list
 	: var {
 			$$ = new std::vector<std::pair<std::vector<std::string>, pascalina::types::base*>>{*$1};
-			delete $1->second; /* pascalina::types::base */
 			delete $1; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
 		}
 	| var_list var {
 			$$ = $1;
 			$$->push_back(std::move(*$2));
-			delete $2->second; /* pascalina::types::base */
 			delete $2; /* std::pair<std::vector<std::string>, pascalina::types::base*> */
 		}
 	;
@@ -150,11 +148,11 @@ var
 			std::vector<std::string> id_list($1->begin(), $1->end());
 			$$ = new std::pair<std::vector<std::string>, pascalina::types::base*>(std::move(id_list), $3->clone());
 
-			for(auto &&e : *$1) {
+			for(auto &&e : id_list) {
 				type_map.emplace(e, $3->clone());
 			}
 
-			delete $1; /* std::string */
+			delete $1; /* std::vector<std::string> */
 			delete $3; /* pacalina::types::base */
 		}
 	;
