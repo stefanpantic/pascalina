@@ -28,6 +28,8 @@ void yyerror(std::string_view msg)
 std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<pascalina::types::base>>> symtable;
 // Program tree
 std::unique_ptr<pascalina::program> root;
+// Error logs
+std::vector<std::string> errors;
 
 %}
 
@@ -106,11 +108,11 @@ program
 			{
 				for(auto &&e2 : e1.first)
 				{
-					if(symtable[*$2].end() != symtable[*$2].find(e2)) {
-						yyerror("Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'.");
-					} else {
-						symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
+					if(symtable["__global__"].end() != symtable["__global__"].find(e2)) {
+						errors.push_back(std::string("[[31mSemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'."));
 					}
+
+					symtable["__global__"][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
 				}
 			}
 
@@ -198,20 +200,21 @@ subprogram_declaration
 subprogram_head
 	: FUNCTION ID arguments ':' base_type ';' {
 			if(symtable.end() != symtable.find(*$2)) {
-				yyerror("Redeclaration of function '" + *$2 + "'.");
-			} else {
-				symtable[*$2]["__placeholder__"] = nullptr;
+				errors.push_back(std::string("[[31mSemantic error[0m]Redeclaration of function '" + *$2 + "'."));
 			}
+
+			symtable[*$2]["__placeholder__"] = nullptr;
 
 			for(auto &&e1 : *$3)
 			{
 				for(auto &&e2 : e1.first)
 				{
 					if(symtable[*$2].end() != symtable[*$2].find(e2)) {
-						yyerror("Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'.");
-					} else {
-						symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
+						errors.push_back(std::string("[[31mSemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'."));
 					}
+
+					symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
+
 				}
 			}
 
@@ -221,20 +224,20 @@ subprogram_head
 		}
 	| PROCEDURE ID arguments ';' {
 			if(symtable.end() != symtable.find(*$2)) {
-				yyerror("Redeclaration of procedure '" + *$2 + "'.");
-			} else {
-				symtable[*$2]["__placeholder__"] = nullptr;
+				errors.push_back(std::string("[[31mSemantic error[0m]Redeclaration of procedure '" + *$2 + "'."));
 			}
+
+			symtable[*$2]["__placeholder__"] = nullptr;
 
 			for(auto &&e1 : *$3)
 			{
 				for(auto &&e2 : e1.first)
 				{
 					if(symtable[*$2].end() != symtable[*$2].find(e2)) {
-						yyerror("Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'.");
-					} else {
-						symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
+						errors.push_back(std::string("[[31mSemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'."));
 					}
+
+					symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
 				}
 			}
 
@@ -345,7 +348,5 @@ expression
 		}
 	| NUM { $$ = new pascalina::literal($1); }
 	;
-
-
 
 %%

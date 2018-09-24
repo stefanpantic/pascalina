@@ -1,13 +1,23 @@
+#include <algorithm>
 #include <iostream>
 #include <unordered_map>
 #include "ast.hpp"
 #include "types.hpp"
 #include "parser.hpp"
 
+
 // Global symbol table with identifiers and types.
 extern std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<pascalina::types::base>>> symtable;
 // Program tree
 extern std::unique_ptr<pascalina::program> root;
+// Error logs
+extern std::vector<std::string> errors;
+
+/*
+* @brief Error handling function.
+*/
+extern void yyerror(std::string_view msg);
+
 
 int
 main(int argc, const char **)
@@ -22,6 +32,12 @@ main(int argc, const char **)
 		for(auto &&e2 : e1.second) {
 			std::cout << '\t' << e2.first << std::endl;
 		}
+	}
+
+	// Raise semantic error
+	if(!errors.empty())	{
+		std::for_each(errors.begin(), errors.end(), [] (auto &&e) { std::cout << e << std::endl; });
+		yyerror("Semantic errors found...");
 	}
 
 	return 0;
