@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
+#include <set>
 #include "ast.hpp"
 #include "types.hpp"
 #include "parser.hpp"
@@ -11,7 +12,7 @@ extern std::unordered_map<std::string, std::unordered_map<std::string, std::uniq
 // Program tree
 extern std::unique_ptr<pascalina::program> root;
 // Error logs
-extern std::vector<std::string> errors;
+extern std::set<std::string> semantic_errors;
 
 /*
 * @brief Error handling function.
@@ -35,9 +36,9 @@ main(int argc, const char **)
 	}
 
 	// Raise semantic error
-	if(!errors.empty())	{
-		std::for_each(errors.begin(), errors.end(), [] (auto &&e) { std::cout << e << std::endl; });
-		yyerror("Semantic errors found...");
+	if(!semantic_errors.empty())	{
+		std::for_each(semantic_errors.begin(), semantic_errors.end(), [] (auto &&e) { std::cout << e << std::endl; });
+		yyerror("Semantic errors found, compilation failed.");
 	}
 
 	return 0;

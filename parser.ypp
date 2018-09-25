@@ -4,6 +4,7 @@
 #include <string> // string
 #include <unordered_map> // unordered_map
 #include <vector> // vector
+#include <set> // set
 #include <memory> // unique_ptr
 
 #include "ast.hpp"
@@ -32,7 +33,7 @@ std::unique_ptr<pascalina::program> root;
 std::vector<std::string> identifiers;
 std::unordered_map<std::string, std::vector<std::string>> function_identifiers;
 // Error logs
-std::vector<std::string> errors;
+std::set<std::string> semantic_errors;
 
 %}
 
@@ -112,7 +113,7 @@ program
 				for(auto &&e2 : e1.first)
 				{
 					if(symtable["__global__"].end() != symtable["__global__"].find(e2)) {
-						errors.push_back(std::string("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'."));
+						semantic_errors.insert("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '__global__'.");
 					}
 
 					symtable["__global__"][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
@@ -129,7 +130,7 @@ program
 				{
 					if(	symtable[function.first].end() == symtable[function.first].find(id) &&
 						symtable["__global__"].end() == symtable["__global__"].find(id)) {
-						errors.push_back(std::string("[[31msemantic error[0m]Undeclared variable '" + id + "' in unit '" + function.first + "'."));
+						semantic_errors.insert("[[31msemantic error[0m]Undeclared variable '" + id + "' in unit '" + function.first + "'.");
 					}
 				}
 			}
@@ -218,7 +219,7 @@ subprogram_declaration
 				for(auto &&e2 : e1.first)
 				{
 					if(symtable[$1->id()].end() != symtable[$1->id()].find(e2)) {
-						errors.push_back(std::string("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + $1->id() + "'."));
+						semantic_errors.insert("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + $1->id() + "'.");
 					}
 
 					symtable[$1->id()][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
@@ -235,7 +236,7 @@ subprogram_declaration
 subprogram_head
 	: FUNCTION ID arguments ':' base_type ';' {
 			if(symtable.end() != symtable.find(*$2)) {
-				errors.push_back(std::string("[[31msemantic error[0m]Redeclaration of function '" + *$2 + "'."));
+				semantic_errors.insert("[[31msemantic error[0m]Redeclaration of function '" + *$2 + "'.");
 			}
 
 			symtable[*$2]["__placeholder__"] = nullptr;
@@ -245,7 +246,7 @@ subprogram_head
 				for(auto &&e2 : e1.first)
 				{
 					if(symtable[*$2].end() != symtable[*$2].find(e2)) {
-						errors.push_back(std::string("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'."));
+						semantic_errors.insert("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'.");
 					}
 
 					symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
@@ -260,7 +261,7 @@ subprogram_head
 		}
 	| PROCEDURE ID arguments ';' {
 			if(symtable.end() != symtable.find(*$2)) {
-				errors.push_back(std::string("[[31msemantic error[0m]Redeclaration of procedure '" + *$2 + "'."));
+				semantic_errors.insert("[[31msemantic error[0m]Redeclaration of procedure '" + *$2 + "'.");
 			}
 
 			symtable[*$2]["__placeholder__"] = nullptr;
@@ -270,7 +271,7 @@ subprogram_head
 				for(auto &&e2 : e1.first)
 				{
 					if(symtable[*$2].end() != symtable[*$2].find(e2)) {
-						errors.push_back(std::string("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'."));
+						semantic_errors.insert("[[31msemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + *$2 + "'.");
 					}
 
 					symtable[*$2][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
@@ -330,7 +331,7 @@ procedure_statement
 
 			// Check if function exists
 			if(symtable.end() == symtable.find(*$1)) {
-				errors.push_back(std::string("[[31msemantic error[0m]Undeclared function '" + *$1 + "'."));
+				semantic_errors.insert("[[31msemantic error[0m]Undeclared function '" + *$1 + "'.");
 			}
 
 			delete $1; /* std::string */
@@ -340,7 +341,7 @@ procedure_statement
 
 			// Check if function exists
 			if(symtable.end() == symtable.find(*$1)) {
-				errors.push_back(std::string("[[31msemantic error[0m]Undeclared function '" + *$1 + "'."));
+				semantic_errors.insert("[[31msemantic error[0m]Undeclared function '" + *$1 + "'.");
 			}
 
 			delete $1; /* std::string */
@@ -393,7 +394,7 @@ expression
 
 			// Check if function exists
 			if(symtable.end() == symtable.find(*$1)) {
-				errors.push_back(std::string("[[31msemantic error[0m]Undeclared function '" + *$1 + "'."));
+				semantic_errors.insert("[[31msemantic error[0m]Undeclared function '" + *$1 + "'.");
 			}
 
 			delete $1; /* std::string */
