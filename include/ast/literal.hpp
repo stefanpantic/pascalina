@@ -13,10 +13,6 @@ namespace pascalina
 	class literal : public expression
 	{
 		public:
-			explicit literal(int val)
-				:	m_val(std::move(val))
-			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
-
 			explicit literal(float val)
 				:	m_val(std::move(val))
 			{ std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl; }
