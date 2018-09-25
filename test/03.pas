@@ -2,7 +2,7 @@ program tekashi;
 
 var
 	a, b : Integer;
-	c, d : Real;
+	c, d, a : Real;
 	e : array [1..10] of Real;
 
 procedure bar;
