@@ -21,7 +21,7 @@ begin
 	writeln(boii);
 	x := readln(e);
 	if color < red then
-		c := a[10]
+		c := a[10] + 10
 	else
 		b := 2;
 
