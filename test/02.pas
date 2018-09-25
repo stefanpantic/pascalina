@@ -7,7 +7,7 @@ var
 
 procedure bar;
 begin
-	a := (b + d)/e + 123.32 + (32 - 14) / 2;
+	a := (x + z)/e + 123.32 + (32 - 14) / 2;
 	a := 4
 end;
 
