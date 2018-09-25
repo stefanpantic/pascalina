@@ -193,6 +193,20 @@ subprogram_declarations
 subprogram_declaration
 	: subprogram_head declarations compound_statement ';' {
 			$$ = new pascalina::function($1, $2, $3);
+
+			for(auto &&e1 : $2->ids())
+			{
+				for(auto &&e2 : e1.first)
+				{
+					if(symtable[$1->id()].end() != symtable[$1->id()].find(e2)) {
+						errors.push_back(std::string("[[31mSemantic error[0m]Redeclaration of variable '" + e2 + "' in unit '" + $1->id() + "'."));
+					}
+
+					symtable[$1->id()][e2] = std::unique_ptr<pascalina::types::base>{e1.second->clone()};
+
+				}
+			}
+
 		}
 	;
 
@@ -337,10 +351,7 @@ expression
 	| '-' %prec '-' expression { $$ = new pascalina::unary_operator(pascalina::unary::minus, $2); }
 	| NOT expression { $$ = new pascalina::unary_operator(pascalina::unary::logical_not, $2); }
 	| '(' expression ')' { $$ = $2; }
-	| ID {
-			$$ = new pascalina::identifier(*$1);
-			delete $1;
-		}
+	| variable { $$ = $1; }
 	| ID '(' expression_list ')' {
 			$$ = new pascalina::function_call(*$1, std::move(*$3));
 			delete $1; /* std::string */
