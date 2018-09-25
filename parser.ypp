@@ -28,6 +28,9 @@ void yyerror(std::string_view msg)
 std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<pascalina::types::base>>> symtable;
 // Program tree
 std::unique_ptr<pascalina::program> root;
+// Used variables
+std::vector<std::string> identifiers;
+std::unordered_map<std::string, std::vector<std::string>> function_identifiers;
 // Error logs
 std::vector<std::string> errors;
 
@@ -116,6 +119,21 @@ program
 				}
 			}
 
+			function_identifiers["__global__"] = std::move(identifiers);
+			identifiers.clear();
+
+			// Check if all used variables are in scope
+			for(auto &&function : function_identifiers)
+			{
+				for(auto &&id : function.second)
+				{
+					if(	symtable[function.first].end() == symtable[function.first].find(id) &&
+						symtable["__global__"].end() == symtable["__global__"].find(id)) {
+						errors.push_back(std::string("[[31mSemantic error[0m]Undeclared variable '" + id + "' in unit '" + function.first + "'."));
+					}
+				}
+			}
+
 			delete $2; /* std::string */
 			delete $5; /* std::vector<pascalina::function*> */
 		}
@@ -194,6 +212,7 @@ subprogram_declaration
 	: subprogram_head declarations compound_statement ';' {
 			$$ = new pascalina::function($1, $2, $3);
 
+			// Add declared variables to function scope
 			for(auto &&e1 : $2->ids())
 			{
 				for(auto &&e2 : e1.first)
@@ -207,6 +226,8 @@ subprogram_declaration
 				}
 			}
 
+			function_identifiers[$1->id()] = std::move(identifiers);
+			identifiers.clear();
 		}
 	;
 
@@ -305,10 +326,22 @@ statement
 procedure_statement
 	: ID {
 			$$ = new pascalina::procedure_call(*$1);
+
+			// Check if function exists
+			if(symtable.end() == symtable.find(*$1)) {
+				errors.push_back(std::string("[[31mSemantic error[0m]Undeclared function '" + *$1 + "'."));
+			}
+
 			delete $1; /* std::string */
 		}
 	| ID '(' expression_list ')' {
 			$$ = new pascalina::procedure_call(*$1, std::move(*$3));
+
+			// Check if function exists
+			if(symtable.end() == symtable.find(*$1)) {
+				errors.push_back(std::string("[[31mSemantic error[0m]Undeclared function '" + *$1 + "'."));
+			}
+
 			delete $1; /* std::string */
 			delete $3; /* std::vector<pascalina::expression*> */
 		}
@@ -318,11 +351,13 @@ procedure_statement
 variable:
 	ID {
 			$$ = new pascalina::identifier(*$1);
+			identifiers.push_back(*$1);
 			delete $1; /* std::string */
 		}
 	| ID '[' expression ']' {
 			$$ = new pascalina::binary_operator(pascalina::binary::index,
 												new pascalina::identifier(*$1), $3);
+			identifiers.push_back(*$1);
 			delete $1; /* std::string */
 		}
 	;
@@ -354,6 +389,12 @@ expression
 	| variable { $$ = $1; }
 	| ID '(' expression_list ')' {
 			$$ = new pascalina::function_call(*$1, std::move(*$3));
+
+			// Check if function exists
+			if(symtable.end() == symtable.find(*$1)) {
+				errors.push_back(std::string("[[31mSemantic error[0m]Undeclared function '" + *$1 + "'."));
+			}
+
 			delete $1; /* std::string */
 			delete $3; /* std::vector<pascalina::expression*> */
 		}
