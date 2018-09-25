@@ -278,7 +278,6 @@ subprogram_head
 				}
 			}
 
-
 			$$ = new pascalina::function_prototype(*$2, std::move(*$3));
 			delete $2; /* std::string */
 			delete $3; /* std::vector<std::string> */
