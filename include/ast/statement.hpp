@@ -12,7 +12,7 @@ namespace pascalina
 	/*
 	* @brief Statement node base class.
 	*/
-	class statement : public pascalina::base<util::visitor>
+	class statement : public base<util::visitor>
 	{
 		public:
 			// Virtual destructor

@@ -12,7 +12,7 @@ namespace pascalina
 	/*
 	* @brief Expression node base class.
 	*/
-	class expression : public pascalina::base<util::visitor>
+	class expression : public base<util::visitor>
 	{
 		public:
 			// Virtual destructor
