@@ -1,7 +1,7 @@
 CXX 		= clang++
 STANDARD 	= c++17
 DEBUG 		= -ggdb -O0
-CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-warning-option -std=$(STANDARD) -Wall -Wextra
+CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-warning-option -Wno-unused-command-line-argument -std=$(STANDARD) -Wall -Wextra
 LDFLAGS 	= $(shell llvm-config --ldflags --libs --system-libs)
 SRC 		= $(wildcard src/*.cpp src/visitors/*.cpp)
 HEAD 		= $(SRC:src=include)
