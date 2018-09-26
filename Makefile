@@ -3,10 +3,10 @@ STANDARD 	= c++17
 DEBUG 		= -ggdb -O0
 CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-warning-option -Wno-unused-command-line-argument -std=$(STANDARD) -Wall -Wextra
 LDFLAGS 	= $(shell llvm-config --ldflags --libs --system-libs)
-SRC 		= $(wildcard src/*.cpp src/visitors/*.cpp)
+SRC 		= $(wildcard src/*.cpp)
 HEAD 		= $(SRC:src=include)
 HEADONLY 	= $(wildcard include/*.hpp include/ast/*.hpp include/types/*.hpp)
-OBJ 		= $(patsubst src/visitors/%.cpp, $(BUILD)/%.o, $(SRC))
+OBJ 		= $(patsubst src/%.cpp, $(BUILD)/%.o, $(SRC))
 BUILD 		= build
 TITLE 		= pascalina.out
 TARGET 		= $(BUILD)/$(TITLE)
