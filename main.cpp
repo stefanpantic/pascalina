@@ -27,15 +27,6 @@ main(int argc, const char **)
 	yydebug = (argc == 2);
 	yyparse();
 
-	// Print scope variables
-	for(auto &&e1 : symtable)
-	{
-		std::cout << "Context: " << e1.first << std::endl;
-		for(auto &&e2 : e1.second) {
-			std::cout << '\t' << e2.first << std::endl;
-		}
-	}
-
 	// Raise semantic error
 	if(!semantic_errors.empty())	{
 		std::for_each(semantic_errors.begin(), semantic_errors.end(), [] (auto &&e) { std::cout << e << std::endl; });
@@ -43,6 +34,7 @@ main(int argc, const char **)
 	}
 
 	pascalina::visitor llv(std::move(symtable));
+	root->accept(llv);
 
 	return 0;
 }

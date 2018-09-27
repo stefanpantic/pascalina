@@ -27,7 +27,7 @@ namespace pascalina
 	visitor::visitor(symtable &&table)
 		:	m_table(std::move(table)),
 			llvm_builder(llvm_context),
-			m_scope("__global__")
+			m_scope("__placeholder__")
 	{
 		// Create a new llvm::Module instance
 		llvm_module = std::make_unique<llvm::Module>("__pascalina__", llvm_context);
@@ -50,7 +50,6 @@ namespace pascalina
 		for(auto &&e1 : m_table) {
 			for(auto &&e2 : e1.second) {
 				llvm_named_values[e1.first][e2.first] = nullptr;
-				std::cout << e1.first << ": " << e2.first << std::endl;
 			}
 		}
 
@@ -66,9 +65,21 @@ namespace pascalina
 		// Lookup local variable name
 		if(llvm_named_values[m_scope].end() != llvm_named_values[m_scope].find(n.id()->id())) {
 			auto alloca{llvm_named_values[m_scope][n.id()->id()]};
+
+			// Cast to double if neccessary
+			if(llvm::Type::getInt32Ty(llvm_context) == alloca->getAllocatedType()) {
+				rhs = llvm_builder.CreateFPToSI(rhs, llvm::Type::getInt32Ty(llvm_context));
+			}
+
 			llvm_builder.CreateStore(rhs, alloca);
 		} else {
 			llvm::GlobalVariable* global{llvm_module->getNamedGlobal(n.id()->id())};
+
+			// Cast to int if neccessary
+			if(llvm::Type::getInt32Ty(llvm_context) == global->getValueType()) {
+				rhs = llvm_builder.CreateFPToSI(rhs, llvm::Type::getInt32Ty(llvm_context));
+			}
+
 			llvm_builder.CreateStore(rhs, global);
 		}
 
@@ -82,11 +93,11 @@ namespace pascalina
 		auto lhs{n.lhs()->accept(*this)}, rhs{n.rhs()->accept(*this)};
 
 		if(lhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
-			lhs = llvm_builder.CreateSIToFP(lhs, llvm::Type::getDoubleTy(llvm_context));
+			lhs = llvm_builder.CreateSIToFP(lhs, llvm::Type::getFloatTy(llvm_context));
 		}
 
 		if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
-			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getDoubleTy(llvm_context));
+			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
 		}
 
 		// Generate code based on operator
@@ -135,7 +146,8 @@ namespace pascalina
 			return llvm_builder.CreateLoad(alloca);
 		} else {
 			// Load global variable
-			return llvm_module->getNamedGlobal(n.id());
+			auto global{llvm_module->getNamedGlobal(n.id())};
+			return llvm_builder.CreateLoad(global);
 		}
 	}
 
@@ -150,8 +162,45 @@ namespace pascalina
 	llvm::Value *visitor::visit(const procedure_call &)
 	{}
 
-	llvm::Value *visitor::visit(const program &)
-	{}
+	llvm::Value *visitor::visit(const program &n)
+	{
+		for(auto &&e1 : n.declarations()->ids())
+		{
+			if(types::typetag::integral == e1.second->tag()) {
+				std::for_each(e1.first.begin(), e1.first.end(), [this] (auto &&e) {
+							llvm_module->getOrInsertGlobal(e, llvm::Type::getInt32Ty(llvm_context));
+							auto global{llvm_module->getNamedGlobal(e)};
+							global->setInitializer(llvm::ConstantInt::get(llvm_context, llvm::APInt(32, 0)));
+						});
+			} else {
+				std::for_each(e1.first.begin(), e1.first.end(), [this] (auto &&e) {
+							llvm_module->getOrInsertGlobal(e, llvm::Type::getFloatTy(llvm_context));
+							auto global{llvm_module->getNamedGlobal(e)};
+							global->setInitializer(llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)));
+						});
+			}
+		}
+
+		// Create main function prototype
+		auto main_type{llvm::FunctionType::get(llvm::Type::getInt32Ty(llvm_context), std::vector<llvm::Type*>{}, false)};
+		auto main_proto{llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", llvm_module.get())};
+
+		// Create main function body
+		auto main_block{llvm::BasicBlock::Create(llvm_context, "entry", main_proto)};
+		llvm_builder.SetInsertPoint(main_block);
+		for(auto &&e : dynamic_cast<const compound*>(n.mainfunc())->statements()) {
+			e->accept(*this);
+		}
+
+		// Create main function return statement
+		llvm_builder.CreateRet(llvm::ConstantInt::get(llvm_context, llvm::APInt(32, 0)));
+		llvm::verifyFunction(*main_proto);
+		llvm_pass_manager->run(*main_proto);
+
+
+		llvm_module->print(llvm::outs(), nullptr);
+		return main_proto;
+	}
 
 	llvm::Value *visitor::visit(const selection &)
 	{}
@@ -177,6 +226,6 @@ namespace pascalina
 	llvm::AllocaInst *visitor::make_floating_alloca(llvm::Function *f, const std::string &id)
 	{
 		llvm::IRBuilder builder(&f->getEntryBlock(), f->getEntryBlock().begin());
-		return builder.CreateAlloca(llvm::Type::getDoubleTy(llvm_context), 0, id.c_str());
+		return builder.CreateAlloca(llvm::Type::getFloatTy(llvm_context), 0, id.c_str());
 	}
 } // namespace pascalina
