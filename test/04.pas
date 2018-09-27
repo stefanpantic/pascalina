@@ -7,20 +7,18 @@ var
 	x, i, r : Real;
 	color, red : Integer;
 
-procedure bar;
+
+function foo(a1, b1, c1 : Integer) : Integer;
+var
+	x1 : Real;
 begin
-	a := (b + d)/e + 123.32 + (32 - 14) / 2;
-	a := 4
+	x1 := 10;
+	c := d + x1;
+	a := 2
 end;
 
-function foo(a, b, c : Integer) : Integer;
 begin
-	c := d;
-	d := 2
-end;
-
-begin
-	i := 0;
+	i := foo(1, 1, 1);
 	a := 1;
 	i := 10;
 	r := i + 0 + a;
