@@ -10,8 +10,8 @@ The end goal is to implement an LLVM visitor that will generate valid LLVM IR co
 - [x] Support control structures (if-else, while)
 - [x] Support functions
 - [x] Perform semantic analysis
-- [ ] Include LLVM
-- [ ] Generate LLVM IR
+- [x] Include LLVM
+- [x] Generate LLVM IR
 - [ ] Add arrays
 - [ ] Produce executable
 - [ ] Add some I/O via external functions
