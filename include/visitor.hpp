@@ -57,6 +57,7 @@ namespace pascalina
 			std::unique_ptr<llvm::Module> llvm_module;
 			std::unique_ptr<llvm::legacy::FunctionPassManager> llvm_pass_manager;
 			alloca_table llvm_named_values;
+			std::unordered_map<std::string, llvm::Function*> llvm_functions;
 
 			// Scope
 			std::string m_scope;

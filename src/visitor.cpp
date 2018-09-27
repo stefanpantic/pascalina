@@ -132,14 +132,120 @@ namespace pascalina
 		return (!n.statements().empty()) ? n.statements().back()->accept(*this) : nullptr;
 	}
 
-	llvm::Value *visitor::visit(const function_call &)
-	{}
+	llvm::Value *visitor::visit(const function_call &n)
+	{
+		// Get the function
+		llvm::Function *func{llvm_functions[n.id()]};
 
-	llvm::Value *visitor::visit(const function &)
-	{}
+		// Check if arguments are correct
+		if(n.args().size() != func->arg_size()) {
+			std::cerr << "[[32msemantic error[0m]Argument mismatch in function '" + m_scope + "'." << std::endl;
+			std::exit(1);
+		}
 
-	llvm::Value *visitor::visit(const function_prototype &)
-	{}
+		// Generate code for function parameters
+		size_t idx{0};
+		std::vector<llvm::Value*> args;
+		for (auto &&e : func->args()) {
+			auto arg{n.args()[idx++]->accept(*this)};
+			if(arg->getType() != e.getType()) {
+				arg = llvm_builder.CreateFPToSI(arg, llvm::Type::getInt32Ty(llvm_context));
+			}
+
+			args.push_back(arg);
+		}
+
+		// Call function
+		return llvm_builder.CreateCall(func, args, n.id());
+	}
+
+	llvm::Value *visitor::visit(const function &n)
+	{
+		// Generate code for function prototype
+		n.proto()->accept(*this);
+		// Set function scope and fetch function
+		m_scope = n.proto()->id();
+		llvm::Function *func{llvm_functions[m_scope]};
+
+		// Create function basic block
+		auto func_block{llvm::BasicBlock::Create(llvm_context, "entry", func)};
+		llvm_builder.SetInsertPoint(func_block);
+
+		// Set function argument values
+		for (auto &e : func->args())
+		{
+			llvm::AllocaInst *alloca{nullptr};
+			if(e.getType() == llvm::Type::getInt32Ty(llvm_context)) {
+				alloca = make_integer_alloca(func, e.getName());
+			} else {
+				alloca = make_floating_alloca(func, e.getName());
+			}
+
+			llvm_named_values[m_scope][e.getName()] = alloca;
+			llvm_builder.CreateStore(&e, alloca);
+		}
+
+		// Generate code for local variables
+		n.vars()->accept(*this);
+
+		// Generate code for function body
+		auto body{dynamic_cast<const compound*>(n.body())};
+		std::for_each(body->statements().begin(), body->statements().end() - 1, [this] (auto &&e) {
+					e->accept(*this);
+				});
+
+		// Generate function return value
+		llvm::Value *retval{llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0))};
+		if(!body->statements().empty() && 0 != n.proto()->params().size()) {
+			auto casted{dynamic_cast<const assignment*>(body->statements().back().get())};
+			if(!casted) {
+				std::cerr << "[[32msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
+				std::exit(1);
+			} else {
+				retval = casted->rhs()->accept(*this);
+			}
+		} else if(0 != n.proto()->params().size()) {
+			std::cerr << "[[32msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
+			std::exit(1);
+		}
+
+		llvm_builder.CreateRet(retval);
+		verifyFunction(*func);
+		llvm_pass_manager->run(*func);
+		return nullptr;
+	}
+
+	llvm::Value *visitor::visit(const function_prototype &n)
+	{
+		// Create function parameters
+		std::vector<llvm::Type*> params;
+		std::vector<std::string> names;
+		for(auto &&e : n.params())
+		{
+			// Set argument types
+			if(types::typetag::integral == e.second->tag()) {
+				params.insert(params.end(), e.first.size(), llvm::Type::getInt32Ty(llvm_context));
+			} else {
+				params.insert(params.end(), e.first.size(), llvm::Type::getFloatTy(llvm_context));
+			}
+
+			// Set argument names
+			names.insert(names.end(), e.first.begin(), e.first.end());
+		}
+
+		// Create function signature
+		auto func_type{llvm::FunctionType::get(llvm::Type::getFloatTy(llvm_context), params, false)};
+		auto func_proto{llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, n.id(), llvm_module.get())};
+
+		size_t idx{0};
+		for(auto &e : func_proto->args()) {
+			e.setName(names[idx++]);
+		}
+
+		// Export prototype to program scope
+		llvm_functions[n.id()] = func_proto;
+		return nullptr;
+	}
 
 	llvm::Value *visitor::visit(const identifier &n)
 	{
@@ -192,8 +298,26 @@ namespace pascalina
 		return llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0));
 	}
 
-	llvm::Value *visitor::visit(const procedure_call &)
-	{}
+	llvm::Value *visitor::visit(const procedure_call &n)
+	{
+		// Get the function
+		llvm::Function *func{llvm_functions[n.id()]};
+
+		// Check if arguments are correct
+		if(n.args().size() != func->arg_size()) {
+			std::cerr << "[[32msemantic error[0m]Argument mismatch in function '" + m_scope + "'." << std::endl;
+			std::exit(1);
+		}
+
+		// Generate code for function parameters
+		std::vector<llvm::Value*> args;
+		for (auto &&e : n.args()) {
+			args.push_back(e->accept(*this));
+		}
+
+		// Call function
+		return llvm_builder.CreateCall(func, args, n.id());
+	}
 
 	llvm::Value *visitor::visit(const program &n)
 	{
@@ -212,6 +336,11 @@ namespace pascalina
 							global->setInitializer(llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)));
 						});
 			}
+		}
+
+		// Generate code for subprograms.
+		for(auto &&e : n.subprograms())	{
+			e->accept(*this);
 		}
 
 		// Create main function prototype
@@ -267,7 +396,7 @@ namespace pascalina
 		llvm_builder.SetInsertPoint(merge_block);
 
 		// Create PHI node for statement paths
-		llvm::PHINode *phi{llvm_builder.CreatePHI(llvm::Type::getDoubleTy(llvm_context), 2, "phinode")};
+		llvm::PHINode *phi{llvm_builder.CreatePHI(llvm::Type::getFloatTy(llvm_context), 2, "phinode")};
 		phi->addIncoming(then, then_block);
 		phi->addIncoming(elif, else_block);
 		return phi;
@@ -302,15 +431,32 @@ namespace pascalina
 		}
 	}
 
-	llvm::Value *visitor::visit(const var &)
-	{}
+	llvm::Value *visitor::visit(const var &n)
+	{
+		for(auto &&e : n.ids())
+		{
+			if(types::typetag::integral == e.second->tag()) {
+				// Create int allocas
+				std::for_each(e.first.begin(), e.first.end(), [this] (auto &&x){
+							llvm_named_values[m_scope][x] = make_integer_alloca(llvm_functions[m_scope], x);
+						});
+			} else {
+				// Create float allocas
+				std::for_each(e.first.begin(), e.first.end(), [this] (auto &&x){
+							llvm_named_values[m_scope][x] = make_floating_alloca(llvm_functions[m_scope], x);
+						});
+			}
+		}
+
+		return nullptr;
+	}
 
 	/*
 	* @brief Create int alloca.
 	*/
 	llvm::AllocaInst *visitor::make_integer_alloca(llvm::Function *f, const std::string &id)
 	{
-		llvm::IRBuilder builder(&f->getEntryBlock(), f->getEntryBlock().begin());
+		llvm::IRBuilder<> builder(&f->getEntryBlock(), f->getEntryBlock().begin());
 		return builder.CreateAlloca(llvm::Type::getInt32Ty(llvm_context), 0, id.c_str());
 	}
 
@@ -319,7 +465,7 @@ namespace pascalina
 	*/
 	llvm::AllocaInst *visitor::make_floating_alloca(llvm::Function *f, const std::string &id)
 	{
-		llvm::IRBuilder builder(&f->getEntryBlock(), f->getEntryBlock().begin());
+		llvm::IRBuilder<> builder(&f->getEntryBlock(), f->getEntryBlock().begin());
 		return builder.CreateAlloca(llvm::Type::getFloatTy(llvm_context), 0, id.c_str());
 	}
 } // namespace pascalina
