@@ -36,8 +36,8 @@ namespace pascalina
 			inline const id_type_pairs &params() const { return m_params; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const
+			{ return v.visit(*this); }
 		private:
 			std::string m_id;
 			id_type_pairs m_params;

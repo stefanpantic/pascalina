@@ -21,8 +21,8 @@ namespace pascalina
 			inline const float &val() const { return m_val; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			float m_val;
 

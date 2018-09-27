@@ -33,8 +33,8 @@ namespace pascalina
 			inline const std::vector<std::unique_ptr<expression>> &args() const { return m_args; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			std::string m_id;
 			std::vector<std::unique_ptr<expression>> m_args;

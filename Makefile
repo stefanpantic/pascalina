@@ -5,6 +5,7 @@ CXXFLAGS 	= $(DEBUG) -I./include $(shell llvm-config --cxxflags) -Wno-unknown-wa
 LDFLAGS 	= $(shell llvm-config --ldflags --libs --system-libs)
 SRC 		= $(wildcard src/*.cpp)
 HEAD 		= $(SRC:src=include)
+HEAD 		= $(HEAD:.cpp=.hpp)
 HEADONLY 	= $(wildcard include/*.hpp include/ast/*.hpp include/types/*.hpp)
 OBJ 		= $(patsubst src/%.cpp, $(BUILD)/%.o, $(SRC))
 BUILD 		= build
@@ -18,7 +19,7 @@ all: $(BUILD) $(TARGET)
 $(TARGET): $(BUILD)/parser.o $(BUILD)/lexer.o $(BUILD)/main.o $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD)/%.o: src/visitors/%.cpp include/visitors/%.hpp
+$(BUILD)/%.o: src/%.cpp include/%.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BUILD)/main.o: main.cpp parser.hpp $(HEADONLY)

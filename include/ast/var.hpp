@@ -33,8 +33,8 @@ namespace pascalina
 			inline const id_type_pairs &ids() const { return m_ids; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			id_type_pairs m_ids;
 	}; // class pascalina::var

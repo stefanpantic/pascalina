@@ -30,8 +30,8 @@ namespace pascalina
 			{ return m_statements; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			std::vector<std::unique_ptr<statement>> m_statements;
 	}; // class pascalina::compound

@@ -22,8 +22,8 @@ namespace pascalina
 			inline const std::string &id() const { return m_id; }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			std::string m_id;
 	}; // class pascalina::identifier

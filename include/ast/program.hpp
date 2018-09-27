@@ -41,8 +41,8 @@ namespace pascalina
 			inline const statement *mainfunc() const { return m_main.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const
+			{ return v.visit(*this); }
 		private:
 			std::string m_id;
 			std::unique_ptr<var> m_declarations;

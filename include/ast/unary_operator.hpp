@@ -34,8 +34,8 @@ namespace pascalina
 			inline const expression *rhs() const { return m_rhs.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			unary m_operator;
 			std::unique_ptr<expression> m_rhs;

@@ -1,6 +1,9 @@
 #pragma once
 
 
+#include <llvm/IR/Value.h>
+
+
 namespace pascalina
 {
 
@@ -29,20 +32,20 @@ namespace pascalina
 		class visitor
 		{
 			public:
-				virtual void visit(const assignment &) = 0;
-				virtual void visit(const binary_operator &) = 0;
-				virtual void visit(const compound &) = 0;
-				virtual void visit(const function_call &) = 0;
-				virtual void visit(const function &) = 0;
-				virtual void visit(const function_prototype &) = 0;
-				virtual void visit(const identifier &) = 0;
-				virtual void visit(const iteration &) = 0;
-				virtual void visit(const literal &) = 0;
-				virtual void visit(const procedure_call &) = 0;
-				virtual void visit(const program &) = 0;
-				virtual void visit(const selection &) = 0;
-				virtual void visit(const unary_operator &) = 0;
-				virtual void visit(const var &) = 0;
+				virtual llvm::Value *visit(const assignment &) = 0;
+				virtual llvm::Value *visit(const binary_operator &) = 0;
+				virtual llvm::Value *visit(const compound &) = 0;
+				virtual llvm::Value *visit(const function_call &) = 0;
+				virtual llvm::Value *visit(const function &) = 0;
+				virtual llvm::Value *visit(const function_prototype &) = 0;
+				virtual llvm::Value *visit(const identifier &) = 0;
+				virtual llvm::Value *visit(const iteration &) = 0;
+				virtual llvm::Value *visit(const literal &) = 0;
+				virtual llvm::Value *visit(const procedure_call &) = 0;
+				virtual llvm::Value *visit(const program &) = 0;
+				virtual llvm::Value *visit(const selection &) = 0;
+				virtual llvm::Value *visit(const unary_operator &) = 0;
+				virtual llvm::Value *visit(const var &) = 0;
 
 				// Virtual destructor
 				virtual ~visitor() {}

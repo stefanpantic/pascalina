@@ -1,6 +1,9 @@
 #pragma once
 
 
+#include <llvm/IR/Value.h>
+
+
 namespace pascalina
 {
 
@@ -15,7 +18,7 @@ namespace pascalina
 			virtual ~base() {}
 
 			// Accept visitor member function
-			virtual void accept(Visitor &v) const = 0;
+			virtual llvm::Value *accept(Visitor &v) const = 0;
 	}; // class pascalina::base
 
 } // namespace pascalina

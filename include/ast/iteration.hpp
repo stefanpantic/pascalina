@@ -25,8 +25,8 @@ namespace pascalina
 			inline const statement *body() const { return m_body.get(); }
 
 			// Accept visitor member function
-			void accept(util::visitor &v) const override
-			{ v.visit(*this); }
+			llvm::Value *accept(util::visitor &v) const override
+			{ return v.visit(*this); }
 		private:
 			std::unique_ptr<expression> m_condition;
 			std::unique_ptr<statement> m_body;
