@@ -23,5 +23,12 @@ begin
 	i := 0;
 	a := 1;
 	i := 10;
-	r := i + 0 + a
+	r := i + 0 + a;
+
+	if i == 0 then
+		while a < 10 do
+			a := a - 1
+	else
+		while a < 1000 do
+			a := a + 1
 end.
