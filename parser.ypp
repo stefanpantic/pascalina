@@ -317,6 +317,11 @@ statement_list
 /* pascalina::statement */
 statement
 	: variable ASSIGN expression { $$ = new pascalina::assignment($1, $3); }
+	| ID '[' expression ']' ASSIGN expression {
+			$$ = new pascalina::array_modify(*$1, $3, $6);
+			identifiers.push_back(*$1);
+			delete $1; /* std::string */
+		}
 	| compound_statement { $$ = $1; }
 	| procedure_statement { $$ = $1; }
 	| WRITELN '(' expression ')' { $$ = new pascalina::writeln($3); }
@@ -384,6 +389,11 @@ expression
 	| NOT expression { $$ = new pascalina::unary_operator(pascalina::unary::logical_not, $2); }
 	| '(' expression ')' { $$ = $2; }
 	| variable { $$ = $1; }
+	| ID '[' expression ']' {
+			$$ = new pascalina::array_index(*$1, $3);
+			identifiers.push_back(*$1);
+			delete $1; /* std::string */
+		}
 	| ID '(' expression_list ')' {
 			$$ = new pascalina::function_call(*$1, std::move(*$3));
 

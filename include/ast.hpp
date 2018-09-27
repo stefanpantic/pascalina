@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include "ast/array_index.hpp"
+#include "ast/array_modify.hpp"
 #include "ast/assignment.hpp"
 #include "ast/base.hpp"
 #include "ast/binary_operator.hpp"

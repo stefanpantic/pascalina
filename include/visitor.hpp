@@ -27,6 +27,8 @@ namespace pascalina
 		public:
 			explicit visitor(symtable &&table);
 
+			llvm::Value *visit(const array_index &) override;
+			llvm::Value *visit(const array_modify &) override;
 			llvm::Value *visit(const assignment &) override;
 			llvm::Value *visit(const binary_operator &) override;
 			llvm::Value *visit(const compound &) override;
@@ -47,7 +49,8 @@ namespace pascalina
 			// Create allocas
 			llvm::AllocaInst *make_integer_alloca(llvm::Function *f, const std::string &id);
 			llvm::AllocaInst *make_floating_alloca(llvm::Function *f, const std::string &id);
-			//llvm::AllocaInst *make_array_alloca(llvm::Function *f, const std::string &id, size_t size);
+			llvm::AllocaInst *make_integer_array_alloca(llvm::Function *f, const std::string &id, size_t size);
+			llvm::AllocaInst *make_floating_array_alloca(llvm::Function *f, const std::string &id, size_t size);
 		private:
 			// Symbol table
 			symtable m_table;

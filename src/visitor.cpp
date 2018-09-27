@@ -66,6 +66,96 @@ namespace pascalina
 
 
 	/*
+	* @brief Generate LLVM IR for array index expression.
+	*/
+	llvm::Value *visitor::visit(const array_index &n)
+	{
+		// Generate code for lhs
+		llvm::Value *id{nullptr};
+		if(llvm_named_values[m_scope].end() != llvm_named_values[m_scope].find(n.id())) {
+			id = llvm_named_values[m_scope][n.id()];
+		} else {
+			id = llvm_module->getNamedGlobal(n.id());
+		}
+
+		// Check if lhs is array
+		const types::base *ptr{nullptr};
+		if(m_table[m_scope].end() != m_table[m_scope].find(n.id())) {
+			ptr = m_table[m_scope][n.id()].get();
+		} else {
+			ptr = m_table["__global__"][n.id()].get();
+		}
+
+		if(types::typetag::array != ptr->tag()) {
+			std::cerr << "[[31msemantic error[0m]Indexing non-array variable '" + n.id() + "'" << std::endl;
+			std::exit(1);
+		}
+
+		// Make sure index is int
+		auto index{n.index()->accept(*this)};
+		if(index->getType() != llvm::Type::getInt32Ty(llvm_context)) {
+			index = llvm_builder.CreateFPToSI(index, llvm::Type::getInt32Ty(llvm_context));
+		}
+
+		// Create index operation
+		std::vector<llvm::Value*> index_op{llvm::ConstantInt::get(llvm_context, llvm::APInt(32, 0)), index};
+		return llvm_builder.CreateLoad(llvm_builder.CreateGEP(id, index_op));
+	}
+
+	llvm::Value *visitor::visit(const array_modify &n)
+	{
+		// Generate code for lhs
+		llvm::Value *id{nullptr};
+		if(llvm_named_values[m_scope].end() != llvm_named_values[m_scope].find(n.id())) {
+			id = llvm_named_values[m_scope][n.id()];
+		} else {
+			id = llvm_module->getNamedGlobal(n.id());
+		}
+
+		// Check if lhs is array
+		const types::base *type{nullptr};
+		if(m_table[m_scope].end() != m_table[m_scope].find(n.id())) {
+			type = m_table[m_scope][n.id()].get();
+		} else {
+			type = m_table["__global__"][n.id()].get();
+		}
+
+		if(types::typetag::array != type->tag()) {
+			std::cerr << "[[31msemantic error[0m]Indexing non-array variable '" + n.id() + "'" << std::endl;
+			std::exit(1);
+		}
+
+		// Make sure index is int
+		auto index{n.index()->accept(*this)};
+		if(index->getType() != llvm::Type::getInt32Ty(llvm_context)) {
+			index = llvm_builder.CreateFPToSI(index, llvm::Type::getInt32Ty(llvm_context));
+		}
+
+		// Create index operation
+		std::vector<llvm::Value*> index_op{llvm::ConstantInt::get(llvm_context, llvm::APInt(32, 0)), index};
+		// Get item at index
+		auto loaded{llvm_builder.CreateGEP(id, index_op)};
+
+		// Generate code for new value
+		auto val(n.val()->accept(*this));
+		auto old{llvm_builder.CreateLoad(loaded)};
+
+		// Perform neccessary casts
+		if(old->getType() == llvm::Type::getDoubleTy(llvm_context)) {
+			if(val->getType() != old->getType()) {
+				val = llvm_builder.CreateSIToFP(val, llvm::Type::getDoubleTy(llvm_context));
+			}
+		} else {
+			if(val->getType() != old->getType()) {
+				val = llvm_builder.CreateFPToSI(val, llvm::Type::getInt32Ty(llvm_context));
+			}
+		}
+
+		llvm_builder.CreateStore(val, loaded);
+		return val;
+	}
+
+	/*
 	* @brief Generate LLVM IR for assignment statement.
 	*/
 	llvm::Value *visitor::visit(const assignment &n)
@@ -382,12 +472,31 @@ namespace pascalina
 							auto global{llvm_module->getNamedGlobal(e)};
 							global->setInitializer(llvm::ConstantInt::get(llvm_context, llvm::APInt(32, 0)));
 						});
-			} else {
+			} else if(types::typetag::real == e1.second->tag()){
 				std::for_each(e1.first.begin(), e1.first.end(), [this] (auto &&e) {
 							llvm_module->getOrInsertGlobal(e, llvm::Type::getDoubleTy(llvm_context));
 							auto global{llvm_module->getNamedGlobal(e)};
 							global->setInitializer(llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)));
 						});
+			} else {
+				auto casted{dynamic_cast<types::array*>(e1.second.get())};
+				if(types::typetag::integral == casted->underlying()->tag()) {
+					// Create int allocas
+					std::for_each(e1.first.begin(), e1.first.end(), [this, &casted] (auto &&e){
+								auto atype{llvm::ArrayType::get(llvm::Type::getInt32Ty(llvm_context), casted->size())};
+								llvm_module->getOrInsertGlobal(e, atype);
+								auto global{llvm_module->getNamedGlobal(e)};
+								global->setInitializer(llvm::ConstantAggregateZero::get(atype));
+							});
+				} else {
+					// Create float allocas
+					std::for_each(e1.first.begin(), e1.first.end(), [this, &casted] (auto &&e){
+								auto atype{llvm::ArrayType::get(llvm::Type::getDoubleTy(llvm_context), casted->size())};
+								llvm_module->getOrInsertGlobal(e, atype);
+								auto global{llvm_module->getNamedGlobal(e)};
+								global->setInitializer(llvm::ConstantAggregateZero::get(atype));
+							});
+				}
 			}
 		}
 
@@ -532,11 +641,24 @@ namespace pascalina
 				std::for_each(e.first.begin(), e.first.end(), [this] (auto &&x){
 							llvm_named_values[m_scope][x] = make_integer_alloca(llvm_functions[m_scope], x);
 						});
-			} else {
+			} else if(types::typetag::real == e.second->tag()) {
 				// Create float allocas
 				std::for_each(e.first.begin(), e.first.end(), [this] (auto &&x){
 							llvm_named_values[m_scope][x] = make_floating_alloca(llvm_functions[m_scope], x);
 						});
+			} else {
+				auto casted{dynamic_cast<types::array*>(e.second.get())};
+				if(types::typetag::integral == casted->underlying()->tag()) {
+					// Create int allocas
+					std::for_each(e.first.begin(), e.first.end(), [this, &casted] (auto &&x){
+								llvm_named_values[m_scope][x] = make_integer_array_alloca(llvm_functions[m_scope], x, casted->size());
+							});
+				} else {
+					// Create float allocas
+					std::for_each(e.first.begin(), e.first.end(), [this, &casted] (auto &&x){
+								llvm_named_values[m_scope][x] = make_floating_array_alloca(llvm_functions[m_scope], x, casted->size());
+							});
+				}
 			}
 		}
 
@@ -577,5 +699,25 @@ namespace pascalina
 	{
 		llvm::IRBuilder<> builder(&f->getEntryBlock(), f->getEntryBlock().begin());
 		return builder.CreateAlloca(llvm::Type::getDoubleTy(llvm_context), 0, id.c_str());
+	}
+
+	/*
+	* @brief Create int array alloca.
+	*/
+	llvm::AllocaInst *visitor::make_integer_array_alloca(llvm::Function *f, const std::string &id, size_t size)
+	{
+		auto atype{llvm::ArrayType::get(llvm::Type::getInt32Ty(llvm_context), size)};
+		llvm::IRBuilder<> builder(&f->getEntryBlock(), f->getEntryBlock().begin());
+		return builder.CreateAlloca(atype, 0, id.c_str());
+	}
+
+	/*
+	* @brief Create double array alloca.
+	*/
+	llvm::AllocaInst *visitor::make_floating_array_alloca(llvm::Function *f, const std::string &id, size_t size)
+	{
+		auto atype{llvm::ArrayType::get(llvm::Type::getDoubleTy(llvm_context), size)};
+		llvm::IRBuilder<> builder(&f->getEntryBlock(), f->getEntryBlock().begin());
+		return builder.CreateAlloca(atype, 0, id.c_str());
 	}
 } // namespace pascalina

@@ -8,6 +8,8 @@ namespace pascalina
 {
 
 	/* Forward declarations */
+	class array_index;
+	class array_modify;
 	class assignment;
 	class binary_operator;
 	class compound;
@@ -34,6 +36,8 @@ namespace pascalina
 		class visitor
 		{
 			public:
+				virtual llvm::Value *visit(const array_index &) = 0;
+				virtual llvm::Value *visit(const array_modify &) = 0;
 				virtual llvm::Value *visit(const assignment &) = 0;
 				virtual llvm::Value *visit(const binary_operator &) = 0;
 				virtual llvm::Value *visit(const compound &) = 0;
