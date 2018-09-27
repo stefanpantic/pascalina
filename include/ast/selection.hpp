@@ -2,6 +2,7 @@
 
 
 #include <memory> // unique_ptr
+#include "none.hpp"
 #include "expression.hpp"
 #include "statement.hpp"
 
@@ -15,7 +16,7 @@ namespace pascalina
 	class selection : public statement
 	{
 		public:
-			explicit selection(expression *condition, statement *then, statement *elif = nullptr)
+			explicit selection(expression *condition, statement *then, statement *elif = new none)
 				:	m_condition(std::move(condition)),
 					m_then(std::move(then)),
 					m_elif(std::move(elif))
