@@ -273,8 +273,26 @@ namespace pascalina
 		return phi;
 	}
 
-	llvm::Value *visitor::visit(const unary_operator &)
-	{}
+	llvm::Value *visitor::visit(const unary_operator &n)
+	{
+		// Generate code for right hand side of operation
+		auto rhs{n.rhs()->accept(*this)};
+
+		// Cast to float if neccesary
+		if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
+			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
+		}
+
+		// Generate code based on operator
+		switch(n.op())
+		{
+			case unary::minus:
+				return llvm_builder.CreateFNeg(rhs);
+			default:
+				std::cerr << "[[32merror[0m]Unary not has not yet been implemented." << std::endl;
+				std::exit(1);
+		}
+	}
 
 	llvm::Value *visitor::visit(const var &)
 	{}
