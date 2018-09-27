@@ -5,35 +5,33 @@
 #include <vector> // vector
 #include <memory> // unique_ptr
 #include "statement.hpp"
+#include "expression.hpp"
 
 
 namespace pascalina
 {
 
 	/*
-	* @brief AST node for compound statement
+	* @brief AST node for writeln statement
 	*/
-	class compound : public statement
+	class writeln : public statement
 	{
 		public:
-			explicit compound(std::vector<statement*> &&statements)
+			explicit writeln(expression *e)
+				:	m_expr(std::move(e))
 			{
-				for(auto *e : statements) {
-					m_statements.emplace_back(std::move(e));
-				}
-
 				std::clog << "[[32mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;
 			}
 
 			// Getter
-			inline const std::vector<std::unique_ptr<statement>> &statements() const
-			{ return m_statements; }
+			inline const expression *expr() const
+			{ return m_expr.get(); }
 
 			// Accept visitor member function
 			llvm::Value *accept(util::visitor &v) const override
 			{ return v.visit(*this); }
 		private:
-			std::vector<std::unique_ptr<statement>> m_statements;
-	}; // class pascalina::compound
+			std::unique_ptr<expression> m_expr;
+	}; // class pascalina::writeln
 
 } // namespace pascalina

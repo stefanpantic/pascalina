@@ -65,7 +65,7 @@ std::set<std::string> semantic_errors;
 }
 
 /* Defining tokens */
-%token ID NUM VAR
+%token ID NUM VAR WRITELN
 %token IF ELSE THEN DO FUNCTION PROCEDURE WHILE
 %token ARRAY ELIPSIS OF INTEGER REAL
 %token PROGRAM BEGIN_ END_
@@ -240,7 +240,7 @@ subprogram_head
 				semantic_errors.insert("[[31msemantic error[0m]Redeclaration of function '" + *$2 + "'.");
 			}
 
-			symtable[*$2]["__placeholder__"] = nullptr;
+			symtable[*$2][*$2] = nullptr;
 
 			for(auto &&e1 : *$3)
 			{
@@ -265,7 +265,7 @@ subprogram_head
 				semantic_errors.insert("[[31msemantic error[0m]Redeclaration of procedure '" + *$2 + "'.");
 			}
 
-			symtable[*$2]["__placeholder__"] = nullptr;
+			symtable[*$2][*$2] = nullptr;
 
 			for(auto &&e1 : *$3)
 			{
@@ -319,6 +319,7 @@ statement
 	: variable ASSIGN expression { $$ = new pascalina::assignment($1, $3); }
 	| compound_statement { $$ = $1; }
 	| procedure_statement { $$ = $1; }
+	| WRITELN '(' expression ')' { $$ = new pascalina::writeln($3); }
 	| IF expression THEN statement ELSE statement { $$ = new pascalina::selection($2, $4, $6); }
 	| IF expression THEN statement { $$ = new pascalina::selection($2, $4); }
 	| WHILE expression DO statement { $$ = new pascalina::iteration($2, $4); }

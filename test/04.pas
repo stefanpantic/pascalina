@@ -14,13 +14,19 @@ var
 begin
 	x1 := 10;
 	c := d + x1;
-	a := 2
+	foo := 2
+end;
+
+procedure bar;
+begin
+	a := b
 end;
 
 begin
 	i := foo(1, 1, 1);
 	a := 1;
 	i := 10;
+	writeln(a);
 	r := i + 0 + a;
 
 	if i == 0 then

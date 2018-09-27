@@ -49,14 +49,25 @@ namespace pascalina
 		// Initialize alloca table
 		for(auto &&e1 : m_table) {
 			for(auto &&e2 : e1.second) {
+				if(e1.first == e2.first) {
+					continue;
+				}
+
 				llvm_named_values[e1.first][e2.first] = nullptr;
 			}
 		}
+
+		// Create extern printf function
+		auto type{llvm::FunctionType::get(llvm::IntegerType::getInt32Ty(llvm_context), llvm::PointerType::get(llvm::Type::getInt8Ty(llvm_context), 0), true)};
+		llvm_functions["printf"] =  llvm::Function::Create(type, llvm::Function::ExternalLinkage, "printf", llvm_module.get());
 
 		std::clog << "[[34mconstructor[0m]" << __PRETTY_FUNCTION__ << std::endl;
 	}
 
 
+	/*
+	* @brief Generate LLVM IR for assignment statement.
+	*/
 	llvm::Value *visitor::visit(const assignment &n)
 	{
 		// Generate code for right hand side of operation
@@ -87,6 +98,9 @@ namespace pascalina
 		return rhs;
 	}
 
+	/*
+	* @brief Generate LLVM IR for binary operator expression.
+	*/
 	llvm::Value *visitor::visit(const binary_operator &n)
 	{
 		// Generate code for left and right hand sides of operator
@@ -126,12 +140,18 @@ namespace pascalina
 		}
 	}
 
+	/*
+	* @brief Generate LLVM IR for binary compound statement.
+	*/
 	llvm::Value *visitor::visit(const compound &n)
 	{
 		std::for_each(n.statements().begin(), n.statements().end() - 1, [this] (auto &&e) { e->accept(*this); });
 		return (!n.statements().empty()) ? n.statements().back()->accept(*this) : nullptr;
 	}
 
+	/*
+	* @brief Generate LLVM IR for function call.
+	*/
 	llvm::Value *visitor::visit(const function_call &n)
 	{
 		// Get the function
@@ -139,7 +159,7 @@ namespace pascalina
 
 		// Check if arguments are correct
 		if(n.args().size() != func->arg_size()) {
-			std::cerr << "[[32msemantic error[0m]Argument mismatch in function '" + m_scope + "'." << std::endl;
+			std::cerr << "[[31msemantic error[0m]Argument mismatch in function '" + m_scope + "'." << std::endl;
 			std::exit(1);
 		}
 
@@ -159,6 +179,9 @@ namespace pascalina
 		return llvm_builder.CreateCall(func, args, n.id());
 	}
 
+	/*
+	* @brief Generate LLVM IR for functions.
+	*/
 	llvm::Value *visitor::visit(const function &n)
 	{
 		// Generate code for function prototype
@@ -170,6 +193,9 @@ namespace pascalina
 		// Create function basic block
 		auto func_block{llvm::BasicBlock::Create(llvm_context, "entry", func)};
 		llvm_builder.SetInsertPoint(func_block);
+
+		// Create writeln string for function.
+		writeln_string = llvm_builder.CreateGlobalStringPtr("%g\n");
 
 		// Set function argument values
 		for (auto &e : func->args())
@@ -195,17 +221,18 @@ namespace pascalina
 				});
 
 		// Generate function return value
-		llvm::Value *retval{llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0))};
+		auto dirty_trick{std::make_unique<literal>(0)};
+		llvm::Value *retval{dirty_trick->accept(*this)};
 		if(!body->statements().empty() && 0 != n.proto()->params().size()) {
 			auto casted{dynamic_cast<const assignment*>(body->statements().back().get())};
-			if(!casted) {
-				std::cerr << "[[32msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
+			if(!casted || casted->id()->id() != n.proto()->id()) {
+				std::cerr << "[[31msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
 				std::exit(1);
 			} else {
 				retval = casted->rhs()->accept(*this);
 			}
 		} else if(0 != n.proto()->params().size()) {
-			std::cerr << "[[32msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
+			std::cerr << "[[31msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
 			std::exit(1);
 		}
 
@@ -215,6 +242,9 @@ namespace pascalina
 		return nullptr;
 	}
 
+	/*
+	* @brief Generate LLVM IR for function prototypes.
+	*/
 	llvm::Value *visitor::visit(const function_prototype &n)
 	{
 		// Create function parameters
@@ -247,6 +277,9 @@ namespace pascalina
 		return nullptr;
 	}
 
+	/*
+	* @brief Generate LLVM IR for identifiers.
+	*/
 	llvm::Value *visitor::visit(const identifier &n)
 	{
 		if(llvm_named_values[m_scope].end() != llvm_named_values[m_scope].find(n.id())) {
@@ -260,6 +293,9 @@ namespace pascalina
 		}
 	}
 
+	/*
+	* @brief Generate LLVM IR for iteration statements.
+	*/
 	llvm::Value *visitor::visit(const iteration &n)
 	{
 		// Get parent function
@@ -288,16 +324,25 @@ namespace pascalina
 		return nullptr;
 	}
 
+	/*
+	* @brief Generate LLVM IR for literals.
+	*/
 	llvm::Value *visitor::visit(const literal &n)
 	{
 		return llvm::ConstantFP::get(llvm_context, llvm::APFloat(n.val()));
 	}
 
+	/*
+	* @brief Generate LLVM IR for empty statement.
+	*/
 	llvm::Value *visitor::visit(const none &)
 	{
 		return llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0));
 	}
 
+	/*
+	* @brief Generate LLVM IR for function call (return value ignored).
+	*/
 	llvm::Value *visitor::visit(const procedure_call &n)
 	{
 		// Get the function
@@ -305,7 +350,7 @@ namespace pascalina
 
 		// Check if arguments are correct
 		if(n.args().size() != func->arg_size()) {
-			std::cerr << "[[32msemantic error[0m]Argument mismatch in function '" + m_scope + "'." << std::endl;
+			std::cerr << "[[31msemantic error[0m]Argument mismatch in function '" + m_scope + "'." << std::endl;
 			std::exit(1);
 		}
 
@@ -319,6 +364,9 @@ namespace pascalina
 		return llvm_builder.CreateCall(func, args, n.id());
 	}
 
+	/*
+	* @brief Generate LLVM IR for entire program.
+	*/
 	llvm::Value *visitor::visit(const program &n)
 	{
 		for(auto &&e1 : n.declarations()->ids())
@@ -338,6 +386,7 @@ namespace pascalina
 			}
 		}
 
+
 		// Generate code for subprograms.
 		for(auto &&e : n.subprograms())	{
 			e->accept(*this);
@@ -346,6 +395,9 @@ namespace pascalina
 		// Create main function prototype
 		auto main_type{llvm::FunctionType::get(llvm::Type::getInt32Ty(llvm_context), std::vector<llvm::Type*>{}, false)};
 		auto main_proto{llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", llvm_module.get())};
+
+		// Create writeln string for main.
+		writeln_string = llvm_builder.CreateGlobalStringPtr("%g\n");
 
 		// Create main function body
 		auto main_block{llvm::BasicBlock::Create(llvm_context, "entry", main_proto)};
@@ -364,6 +416,9 @@ namespace pascalina
 		return main_proto;
 	}
 
+	/*
+	* @brief Generate LLVM IR for selection statements.
+	*/
 	llvm::Value *visitor::visit(const selection &n)
 	{
 		// Generate code for condition
@@ -402,6 +457,9 @@ namespace pascalina
 		return phi;
 	}
 
+	/*
+	* @brief Generate LLVM IR for unary operators.
+	*/
 	llvm::Value *visitor::visit(const unary_operator &n)
 	{
 		// Generate code for right hand side of operation
@@ -431,6 +489,9 @@ namespace pascalina
 		}
 	}
 
+	/*
+	* @brief Generate LLVM IR for var statements.
+	*/
 	llvm::Value *visitor::visit(const var &n)
 	{
 		for(auto &&e : n.ids())
@@ -449,6 +510,21 @@ namespace pascalina
 		}
 
 		return nullptr;
+	}
+
+	/*
+	* @brief Generate LLVM IR for writeln statement.
+	*/
+	llvm::Value *visitor::visit(const writeln &n)
+	{
+		// Get the function
+		llvm::Function *func{llvm_functions["printf"]};
+
+		// Arguments
+		std::vector<llvm::Value*> args{writeln_string, n.expr()->accept(*this)};
+
+		// Call function
+		return llvm_builder.CreateCall(func, args, "writeln");
 	}
 
 	/*

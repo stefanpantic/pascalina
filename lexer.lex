@@ -35,6 +35,7 @@ extern void yyerror(std::string_view msg);
 "not"				{ return NOT; }
 "of"				{ return OF; }
 "var"				{ return VAR; }
+"writeln"			{ return WRITELN; }
 "program"			{ return PROGRAM; }
 "procedure"			{ return PROCEDURE; }
 "function"			{ return FUNCTION; }
@@ -47,11 +48,11 @@ extern void yyerror(std::string_view msg);
 "<="				{ return LE; }
 ">="				{ return GE; }
 ".."				{ return ELIPSIS; }
-[a-z][A-Za-z0-9_]*	{ 
+[a-z][A-Za-z0-9_]*	{
 						yylval.identifier = new std::string(yytext);
 						return ID;
 					}
-[0-9]+([.][0-9]+)?	{ 
+[0-9]+([.][0-9]+)?	{
 						yylval.literal = std::atof(yytext);
 						return NUM;
 					}

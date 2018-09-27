@@ -42,6 +42,7 @@ namespace pascalina
 			llvm::Value *visit(const selection &) override;
 			llvm::Value *visit(const unary_operator &) override;
 			llvm::Value *visit(const var &) override;
+			llvm::Value *visit(const writeln &) override;
 		private:
 			// Create allocas
 			llvm::AllocaInst *make_integer_alloca(llvm::Function *f, const std::string &id);
@@ -58,6 +59,7 @@ namespace pascalina
 			std::unique_ptr<llvm::legacy::FunctionPassManager> llvm_pass_manager;
 			alloca_table llvm_named_values;
 			std::unordered_map<std::string, llvm::Function*> llvm_functions;
+			llvm::Value *writeln_string;
 
 			// Scope
 			std::string m_scope;

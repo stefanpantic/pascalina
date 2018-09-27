@@ -23,6 +23,7 @@ namespace pascalina
 	class selection;
 	class unary_operator;
 	class var;
+	class writeln;
 
 	namespace util
 	{
@@ -48,6 +49,7 @@ namespace pascalina
 				virtual llvm::Value *visit(const selection &) = 0;
 				virtual llvm::Value *visit(const unary_operator &) = 0;
 				virtual llvm::Value *visit(const var &) = 0;
+				virtual llvm::Value *visit(const writeln &) = 0;
 
 				// Virtual destructor
 				virtual ~visitor() {}
