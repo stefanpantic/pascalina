@@ -5,3 +5,5 @@ parser.hpp
 parser.cpp
 parser.output
 lexer.cpp
+*.out
+*.ll
