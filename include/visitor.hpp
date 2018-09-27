@@ -36,6 +36,7 @@ namespace pascalina
 			llvm::Value *visit(const identifier &) override;
 			llvm::Value *visit(const iteration &) override;
 			llvm::Value *visit(const literal &) override;
+			llvm::Value *visit(const none &) override;
 			llvm::Value *visit(const procedure_call &) override;
 			llvm::Value *visit(const program &) override;
 			llvm::Value *visit(const selection &) override;

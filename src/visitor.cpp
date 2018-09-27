@@ -126,8 +126,11 @@ namespace pascalina
 		}
 	}
 
-	llvm::Value *visitor::visit(const compound &)
-	{}
+	llvm::Value *visitor::visit(const compound &n)
+	{
+		std::for_each(n.statements().begin(), n.statements().end() - 1, [this] (auto &&e) { e->accept(*this); });
+		return (!n.statements().empty()) ? n.statements().back()->accept(*this) : nullptr;
+	}
 
 	llvm::Value *visitor::visit(const function_call &)
 	{}
@@ -151,12 +154,42 @@ namespace pascalina
 		}
 	}
 
-	llvm::Value *visitor::visit(const iteration &)
-	{}
+	llvm::Value *visitor::visit(const iteration &n)
+	{
+		// Get parent function
+		auto func{llvm_builder.GetInsertBlock()->getParent()};
+		// Initialize loop block
+		auto *loop_block{llvm::BasicBlock::Create(llvm_context, "beginwhile", func)};
+
+		// Set insert point
+		llvm_builder.CreateBr(loop_block);
+		llvm_builder.SetInsertPoint(loop_block);
+
+		// Generate code for loop condition
+		auto condition{n.condition()->accept(*this)};
+
+		llvm::BasicBlock *loop_body_block{llvm::BasicBlock::Create(llvm_context, "while", func)};
+		llvm::BasicBlock *after_loop_block{llvm::BasicBlock::Create(llvm_context, "endwhile", func)};
+		llvm_builder.CreateCondBr(condition, loop_body_block, after_loop_block);
+
+		// Set insert point to loop body
+		llvm_builder.SetInsertPoint(loop_body_block);
+		// Generate code for body
+		n.body()->accept(*this);
+
+		llvm_builder.CreateBr(loop_block);
+		llvm_builder.SetInsertPoint(after_loop_block);
+		return nullptr;
+	}
 
 	llvm::Value *visitor::visit(const literal &n)
 	{
 		return llvm::ConstantFP::get(llvm_context, llvm::APFloat(n.val()));
+	}
+
+	llvm::Value *visitor::visit(const none &)
+	{
+		return llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0));
 	}
 
 	llvm::Value *visitor::visit(const procedure_call &)
@@ -202,8 +235,43 @@ namespace pascalina
 		return main_proto;
 	}
 
-	llvm::Value *visitor::visit(const selection &)
-	{}
+	llvm::Value *visitor::visit(const selection &n)
+	{
+		// Generate code for condition
+		auto condition{n.condition()->accept(*this)};
+		auto func{llvm_builder.GetInsertBlock()->getParent()};
+
+		// Create if/then/else blocks
+		llvm::BasicBlock *then_block {llvm::BasicBlock::Create(llvm_context, "if", func)};
+		llvm::BasicBlock *else_block {llvm::BasicBlock::Create(llvm_context, "else")};
+		llvm::BasicBlock *merge_block{llvm::BasicBlock::Create(llvm_context, "afterif")};
+
+		// Create break condition
+		llvm_builder.CreateCondBr(condition, then_block, else_block);
+		llvm_builder.SetInsertPoint(then_block);
+
+		// Generate then block
+		auto then{n.then()->accept(*this)};
+		llvm_builder.CreateBr(merge_block);
+		then_block = llvm_builder.GetInsertBlock();
+
+		// Generate else block
+		func->getBasicBlockList().push_back(else_block);
+		llvm_builder.SetInsertPoint(else_block);
+		auto elif{n.elif()->accept(*this)};
+
+		// Merge blocks
+		llvm_builder.CreateBr(merge_block);
+		else_block = llvm_builder.GetInsertBlock();
+		func->getBasicBlockList().push_back(merge_block);
+		llvm_builder.SetInsertPoint(merge_block);
+
+		// Create PHI node for statement paths
+		llvm::PHINode *phi{llvm_builder.CreatePHI(llvm::Type::getDoubleTy(llvm_context), 2, "phinode")};
+		phi->addIncoming(then, then_block);
+		phi->addIncoming(elif, else_block);
+		return phi;
+	}
 
 	llvm::Value *visitor::visit(const unary_operator &)
 	{}
