@@ -315,7 +315,10 @@ namespace pascalina
 
 		// Generate code for loop condition
 		auto condition{n.condition()->accept(*this)};
-    	condition = llvm_builder.CreateFCmpONE(llvm_builder.CreateSIToFP(condition, llvm::Type::getDoubleTy(llvm_context)), llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)), "whilecond");
+		condition = llvm_builder.CreateFCmpONE(llvm_builder.CreateSIToFP(
+							condition,
+							llvm::Type::getDoubleTy(llvm_context)),
+						llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)), "whilecond");
 
 		llvm::BasicBlock *after_loop_block{llvm::BasicBlock::Create(llvm_context, "endwhile", func)};
 		llvm_builder.CreateCondBr(condition, loop_block, after_loop_block);
