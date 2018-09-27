@@ -17,6 +17,7 @@ namespace pascalina
 	class identifier;
 	class iteration;
 	class literal;
+	class none;
 	class procedure_call;
 	class program;
 	class selection;
@@ -41,6 +42,7 @@ namespace pascalina
 				virtual llvm::Value *visit(const identifier &) = 0;
 				virtual llvm::Value *visit(const iteration &) = 0;
 				virtual llvm::Value *visit(const literal &) = 0;
+				virtual llvm::Value *visit(const none &) = 0;
 				virtual llvm::Value *visit(const procedure_call &) = 0;
 				virtual llvm::Value *visit(const program &) = 0;
 				virtual llvm::Value *visit(const selection &) = 0;
