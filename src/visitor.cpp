@@ -107,11 +107,11 @@ namespace pascalina
 		auto lhs{n.lhs()->accept(*this)}, rhs{n.rhs()->accept(*this)};
 
 		if(lhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
-			lhs = llvm_builder.CreateSIToFP(lhs, llvm::Type::getFloatTy(llvm_context));
+			lhs = llvm_builder.CreateSIToFP(lhs, llvm::Type::getDoubleTy(llvm_context));
 		}
 
 		if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
-			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
+			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getDoubleTy(llvm_context));
 		}
 
 		// Generate code based on operator
@@ -230,6 +230,9 @@ namespace pascalina
 				std::exit(1);
 			} else {
 				retval = casted->rhs()->accept(*this);
+				if(retval->getType() != llvm::Type::getDoubleTy(llvm_context)) {
+					retval = llvm_builder.CreateSIToFP(retval, llvm::Type::getDoubleTy(llvm_context));
+				}
 			}
 		} else if(0 != n.proto()->params().size()) {
 			std::cerr << "[[31msemantic error[0m]Function '" + m_scope + "' doesn't have a return statement." << std::endl;
@@ -256,7 +259,7 @@ namespace pascalina
 			if(types::typetag::integral == e.second->tag()) {
 				params.insert(params.end(), e.first.size(), llvm::Type::getInt32Ty(llvm_context));
 			} else {
-				params.insert(params.end(), e.first.size(), llvm::Type::getFloatTy(llvm_context));
+				params.insert(params.end(), e.first.size(), llvm::Type::getDoubleTy(llvm_context));
 			}
 
 			// Set argument names
@@ -264,7 +267,7 @@ namespace pascalina
 		}
 
 		// Create function signature
-		auto func_type{llvm::FunctionType::get(llvm::Type::getFloatTy(llvm_context), params, false)};
+		auto func_type{llvm::FunctionType::get(llvm::Type::getDoubleTy(llvm_context), params, false)};
 		auto func_proto{llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, n.id(), llvm_module.get())};
 
 		size_t idx{0};
@@ -307,20 +310,19 @@ namespace pascalina
 		llvm_builder.CreateBr(loop_block);
 		llvm_builder.SetInsertPoint(loop_block);
 
-		// Generate code for loop condition
-		auto condition{n.condition()->accept(*this)};
-
-		llvm::BasicBlock *loop_body_block{llvm::BasicBlock::Create(llvm_context, "while", func)};
-		llvm::BasicBlock *after_loop_block{llvm::BasicBlock::Create(llvm_context, "endwhile", func)};
-		llvm_builder.CreateCondBr(condition, loop_body_block, after_loop_block);
-
-		// Set insert point to loop body
-		llvm_builder.SetInsertPoint(loop_body_block);
 		// Generate code for body
 		n.body()->accept(*this);
 
-		llvm_builder.CreateBr(loop_block);
+		// Generate code for loop condition
+		auto condition{n.condition()->accept(*this)};
+    	condition = llvm_builder.CreateFCmpONE(llvm_builder.CreateSIToFP(condition, llvm::Type::getDoubleTy(llvm_context)), llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)), "whilecond");
+
+		llvm::BasicBlock *after_loop_block{llvm::BasicBlock::Create(llvm_context, "endwhile", func)};
+		llvm_builder.CreateCondBr(condition, loop_block, after_loop_block);
+
+		// Set insert point to loop body
 		llvm_builder.SetInsertPoint(after_loop_block);
+		loop_block = llvm_builder.GetInsertBlock();
 		return nullptr;
 	}
 
@@ -379,7 +381,7 @@ namespace pascalina
 						});
 			} else {
 				std::for_each(e1.first.begin(), e1.first.end(), [this] (auto &&e) {
-							llvm_module->getOrInsertGlobal(e, llvm::Type::getFloatTy(llvm_context));
+							llvm_module->getOrInsertGlobal(e, llvm::Type::getDoubleTy(llvm_context));
 							auto global{llvm_module->getNamedGlobal(e)};
 							global->setInitializer(llvm::ConstantFP::get(llvm_context, llvm::APFloat(0.0)));
 						});
@@ -396,12 +398,13 @@ namespace pascalina
 		auto main_type{llvm::FunctionType::get(llvm::Type::getInt32Ty(llvm_context), std::vector<llvm::Type*>{}, false)};
 		auto main_proto{llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", llvm_module.get())};
 
-		// Create writeln string for main.
-		writeln_string = llvm_builder.CreateGlobalStringPtr("%g\n");
-
 		// Create main function body
 		auto main_block{llvm::BasicBlock::Create(llvm_context, "entry", main_proto)};
 		llvm_builder.SetInsertPoint(main_block);
+
+		// Create writeln string for main.
+		writeln_string = llvm_builder.CreateGlobalStringPtr("%g\n");
+
 		for(auto &&e : dynamic_cast<const compound*>(n.mainfunc())->statements()) {
 			e->accept(*this);
 		}
@@ -411,7 +414,32 @@ namespace pascalina
 		llvm::verifyFunction(*main_proto);
 		llvm_pass_manager->run(*main_proto);
 
+		// Initialize necessary stuff
+		llvm::InitializeAllTargetInfos();
+		llvm::InitializeAllTargets();
+		llvm::InitializeAllTargetMCs();
+		llvm::InitializeAllAsmParsers();
+		llvm::InitializeAllAsmPrinters();
 
+		// Get target tripple (basic info about target system)
+		auto target_triple(llvm::sys::getDefaultTargetTriple());
+		llvm_module->setTargetTriple(target_triple);
+
+		// Find requested target
+		std::string error_msg;
+		auto target{llvm::TargetRegistry::lookupTarget(target_triple, error_msg)};
+
+		// Set target options
+		std::string CPU("generic"), features;
+		llvm::TargetOptions options;
+		auto reallocation_model(llvm::Optional<llvm::Reloc::Model>{});
+		auto target_machine(target->createTargetMachine(target_triple, CPU, features, options,
+														reallocation_model));
+		// Configure module
+		llvm_module->setDataLayout(target_machine->createDataLayout());
+		llvm_module->setTargetTriple(target_triple);
+
+		// Output llvm code
 		llvm_module->print(llvm::outs(), nullptr);
 		return main_proto;
 	}
@@ -451,7 +479,7 @@ namespace pascalina
 		llvm_builder.SetInsertPoint(merge_block);
 
 		// Create PHI node for statement paths
-		llvm::PHINode *phi{llvm_builder.CreatePHI(llvm::Type::getFloatTy(llvm_context), 2, "phinode")};
+		llvm::PHINode *phi{llvm_builder.CreatePHI(llvm::Type::getDoubleTy(llvm_context), 2, "phinode")};
 		phi->addIncoming(then, then_block);
 		phi->addIncoming(elif, else_block);
 		return phi;
@@ -472,7 +500,7 @@ namespace pascalina
 			case unary::minus: {
 					// Cast to float if neccesary
 					if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
-						rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
+						rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getDoubleTy(llvm_context));
 					}
 
 					return llvm_builder.CreateFNeg(rhs);
@@ -484,7 +512,7 @@ namespace pascalina
 					}
 
 					rhs = llvm_builder.CreateNot(rhs);
-					return llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
+					return llvm_builder.CreateSIToFP(rhs, llvm::Type::getDoubleTy(llvm_context));
 				}
 		}
 	}
@@ -517,14 +545,17 @@ namespace pascalina
 	*/
 	llvm::Value *visitor::visit(const writeln &n)
 	{
-		// Get the function
-		llvm::Function *func{llvm_functions["printf"]};
+		// Generate code for values
+		auto value{n.expr()->accept(*this)};
+		if(value->getType() != llvm::Type::getDoubleTy(llvm_context)) {
+			value = llvm_builder.CreateSIToFP(value, llvm::Type::getDoubleTy(llvm_context));
+		}
 
 		// Arguments
-		std::vector<llvm::Value*> args{writeln_string, n.expr()->accept(*this)};
+		std::vector<llvm::Value*> args{writeln_string, value};
 
 		// Call function
-		return llvm_builder.CreateCall(func, args, "writeln");
+		return llvm_builder.CreateCall(llvm_functions["printf"], args, "writeln");
 	}
 
 	/*
@@ -542,6 +573,6 @@ namespace pascalina
 	llvm::AllocaInst *visitor::make_floating_alloca(llvm::Function *f, const std::string &id)
 	{
 		llvm::IRBuilder<> builder(&f->getEntryBlock(), f->getEntryBlock().begin());
-		return builder.CreateAlloca(llvm::Type::getFloatTy(llvm_context), 0, id.c_str());
+		return builder.CreateAlloca(llvm::Type::getDoubleTy(llvm_context), 0, id.c_str());
 	}
 } // namespace pascalina
