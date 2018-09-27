@@ -20,16 +20,8 @@ begin
 end;
 
 begin
-	if color < red then
-		c := 10
-	else
-		b := 2;
-
 	i := 0;
-	while i < 10 do
-	begin
-		i := i + 1
-	end;
-
-	r := 0
+	a := 1;
+	i := 10;
+	r := i + 0 + a
 end.
