@@ -4,6 +4,7 @@
 #include <set>
 #include "ast.hpp"
 #include "types.hpp"
+#include "visitor.hpp"
 #include "parser.hpp"
 
 
@@ -40,6 +41,8 @@ main(int argc, const char **)
 		std::for_each(semantic_errors.begin(), semantic_errors.end(), [] (auto &&e) { std::cout << e << std::endl; });
 		yyerror("Semantic errors found, compilation failed.");
 	}
+
+	pascalina::visitor llv(std::move(symtable));
 
 	return 0;
 }

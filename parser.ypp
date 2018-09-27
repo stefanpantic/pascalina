@@ -46,6 +46,7 @@ std::set<std::string> semantic_errors;
 	/* Identifiers */
 	std::string *identifier;
 	std::vector<std::string> *identifier_list;
+	pascalina::identifier *identifier_n;
 	/* Statements */
 	pascalina::statement *statement;
 	std::vector<pascalina::statement*> *statement_list;
@@ -81,7 +82,7 @@ std::set<std::string> semantic_errors;
 %type<subprogram_head> subprogram_head
 %type<statement_list> statement_list optional_statements
 %type<statement> statement compound_statement procedure_statement
-%type<expression> variable
+%type<identifier_n> variable
 %type<expression_list> expression_list
 %type<expression> expression
 
@@ -352,12 +353,6 @@ procedure_statement
 variable:
 	ID {
 			$$ = new pascalina::identifier(*$1);
-			identifiers.push_back(*$1);
-			delete $1; /* std::string */
-		}
-	| ID '[' expression ']' {
-			$$ = new pascalina::binary_operator(pascalina::binary::index,
-												new pascalina::identifier(*$1), $3);
 			identifiers.push_back(*$1);
 			delete $1; /* std::string */
 		}
