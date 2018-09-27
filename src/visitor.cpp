@@ -278,19 +278,27 @@ namespace pascalina
 		// Generate code for right hand side of operation
 		auto rhs{n.rhs()->accept(*this)};
 
-		// Cast to float if neccesary
-		if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
-			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
-		}
 
 		// Generate code based on operator
 		switch(n.op())
 		{
-			case unary::minus:
-				return llvm_builder.CreateFNeg(rhs);
-			default:
-				std::cerr << "[[32merror[0m]Unary not has not yet been implemented." << std::endl;
-				std::exit(1);
+			case unary::minus: {
+					// Cast to float if neccesary
+					if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
+						rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
+					}
+
+					return llvm_builder.CreateFNeg(rhs);
+				}
+			case unary::logical_not: {
+					// Cast to int if neccesary
+					if(rhs->getType() != llvm::Type::getInt32Ty(llvm_context)) {
+						rhs = llvm_builder.CreateFPToSI(rhs, llvm::Type::getInt32Ty(llvm_context));
+					}
+
+					rhs = llvm_builder.CreateNot(rhs);
+					return llvm_builder.CreateSIToFP(rhs, llvm::Type::getFloatTy(llvm_context));
+				}
 		}
 	}
 
