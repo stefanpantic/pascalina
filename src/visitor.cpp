@@ -196,6 +196,13 @@ namespace pascalina
 		// Generate code for left and right hand sides of operator
 		auto lhs{n.lhs()->accept(*this)}, rhs{n.rhs()->accept(*this)};
 
+		// Check if rhs and lhs are valid
+		if(lhs->getType()->isArrayTy() || rhs->getType()->isArrayTy()) {
+			std::cerr << "[[31msemantic error[0m]Invalid operands to binary operator in '" + m_scope + "' (Array)." << std::endl;
+			std::exit(1);
+		}
+
+		// Perform implicit casts
 		if(lhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
 			lhs = llvm_builder.CreateSIToFP(lhs, llvm::Type::getDoubleTy(llvm_context));
 		}
@@ -203,6 +210,7 @@ namespace pascalina
 		if(rhs->getType() == llvm::Type::getInt32Ty(llvm_context)) {
 			rhs = llvm_builder.CreateSIToFP(rhs, llvm::Type::getDoubleTy(llvm_context));
 		}
+
 
 		// Generate code based on operator
 		switch(n.op())
@@ -605,6 +613,11 @@ namespace pascalina
 		// Generate code for right hand side of operation
 		auto rhs{n.rhs()->accept(*this)};
 
+		// Check if rhs type is valid
+		if(rhs->getType()->isArrayTy()) {
+			std::cerr << "[[31msemantic error[0m]Invalid operands to unary operator in '" + m_scope + "' (Array)." << std::endl;
+			std::exit(1);
+		}
 
 		// Generate code based on operator
 		switch(n.op())
