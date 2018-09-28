@@ -163,9 +163,21 @@ namespace pascalina
 		// Generate code for right hand side of operation
 		auto rhs{n.rhs()->accept(*this)};
 
+		// Check type
+		if(rhs->getType()->isArrayTy()) {
+			std::cerr << "[[31msemantic error[0m]Array doesn't support assignment." << std::endl;
+			std::exit(1);
+		}
+
 		// Lookup local variable name
 		if(llvm_named_values[m_scope].end() != llvm_named_values[m_scope].find(n.id()->id())) {
 			auto alloca{llvm_named_values[m_scope][n.id()->id()]};
+
+			// Check type
+			if(alloca->getAllocatedType()->isArrayTy()) {
+				std::cerr << "[[31msemantic error[0m]Array doesn't support assignment." << std::endl;
+				std::exit(1);
+			}
 
 			// Cast to double if neccessary
 			if(llvm::Type::getInt32Ty(llvm_context) == alloca->getAllocatedType()) {
@@ -175,6 +187,12 @@ namespace pascalina
 			llvm_builder.CreateStore(rhs, alloca);
 		} else {
 			llvm::GlobalVariable* global{llvm_module->getNamedGlobal(n.id()->id())};
+
+			// Check type
+			if(global->getType()->isArrayTy()) {
+				std::cerr << "[[31msemantic error[0m]Array doesn't support assignment." << std::endl;
+				std::exit(1);
+			}
 
 			// Cast to int if neccessary
 			if(llvm::Type::getInt32Ty(llvm_context) == global->getValueType()) {
